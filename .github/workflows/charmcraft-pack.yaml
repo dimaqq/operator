@@ -11,6 +11,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: jnsgruk/hello-kubecon
+        ref: dbd133466dde59ee64f20a732a8f3d2e560ec3b8  # master, July 3rd, 2023
 
     - name: Update 'ops' dependency in test charm to latest
       run: |

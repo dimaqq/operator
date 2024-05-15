@@ -9,6 +9,9 @@ venv
 .vscode
 .coverage
 /.tox
+.env
+.envrc
+.secrets
 
 # Build artifacts
 /dist
