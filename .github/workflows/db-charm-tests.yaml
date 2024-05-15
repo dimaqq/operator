@@ -8,10 +8,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        charm-repo:
-          - "canonical/postgresql-operator"
-          - "canonical/postgresql-k8s-operator"
-          - "canonical/mysql-operator"
+        include:
+          - charm-repo: canonical/postgresql-operator
+            tag: rev405
+          - charm-repo: canonical/postgresql-k8s-operator
+            tag: rev251
+          - charm-repo: canonical/mysql-operator
+            tag: rev234
 # TODO: uncomment once secrets issues are fixed in this charm:
 #       https://github.com/canonical/mysql-k8s-operator/pull/371
 #          - "canonical/mysql-k8s-operator"
@@ -21,6 +24,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ${{ matrix.charm-repo }}
+          ref: ${{ matrix.tag }}
 
       - name: Checkout the operator repository
         uses: actions/checkout@v3
