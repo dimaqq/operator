@@ -15,9 +15,8 @@ jobs:
             tag: rev251
           - charm-repo: canonical/mysql-operator
             tag: rev234
-# TODO: uncomment once secrets issues are fixed in this charm:
-#       https://github.com/canonical/mysql-k8s-operator/pull/371
-#          - "canonical/mysql-k8s-operator"
+          - charm-repo: canonical/mysql-k8s-operator
+            tag: rev138
 
     steps:
       - name: Checkout the ${{ matrix.charm-repo }} repository
