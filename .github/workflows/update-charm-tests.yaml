@@ -1,0 +1,69 @@
+---
+on:
+  pull_request:
+    # for dev testing only
+  push:
+    # for dev testing only
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Commit SHA'
+        required: true
+
+jobs:
+  show-tags:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - charm-repo: "canonical/postgresql-operator"
+            workflow: db-charm-tests.yaml
+          - charm-repo: "canonical/postgresql-k8s-operator"
+            workflow: db-charm-tests.yaml
+          - charm-repo: "canonical/mysql-operator"
+            workflow: db-charm-tests.yaml
+          - charm-repo: "canonical/mysql-k8s-operator"
+            workflow: db-charm-tests.yaml
+          - charm-repo: "jnsgruk/hello-kubecon"
+            workflow: hello-charm-tests.yaml
+          - charm-repo: "juju/hello-juju-charm"
+            workflow: hello-charm-tests.yaml
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install yaml
+
+      - name: Show tags for commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {readFileSync} = require('fs');
+            const {parseDocument} = require('yaml');
+
+            const charm_repo = '${{ matrix.charm-repo }}';
+            const workflow = '.github/workflows/${{ matrix.workflow }}';
+
+            const parsed = parseDocument(readFileSync(workflow, 'utf8'));
+            console.log("parsed", parsed);
+
+            const [owner, repo] = charm_repo.split('/');
+            const details = await github.rest.repos.get({owner, repo });
+            const branch = details.data.default_branch;
+
+            const resp = await github.rest.repos.listCommits({owner, repo, per_page: 1});
+            const commit = resp.data[0].sha;
+            const timestamp = resp.data[0].commit.committer.date;
+            
+            const tags = await github.rest.repos.listTags({
+              owner: owner,
+              repo: repo,
+            });
+
+            const matches = tags.data.filter(tag => tag.commit.sha === commit);
+            const tag_line = matches.map(tag => tag.name).join(' ');
+            console.log(workflow, charm_repo, commit, "#", tag_line, timestamp);
