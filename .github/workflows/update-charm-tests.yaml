@@ -22,7 +22,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const {readFileSync} = require('fs');
+            const {readFileSync, writeFileSync} = require('fs');
             const {parseDocument} = require('yaml');
             const space = ' ';
 
@@ -32,17 +32,18 @@ jobs:
             ];
 
             for (const workflow of workflows) {
-              const parsed = parseDocument(readFileSync(workflow, 'utf8'));
+              const doc = parseDocument(readFileSync(workflow, 'utf8'));
 
               // it's the first job that's parametrised with external repositories
-              const job_name = parsed.get('jobs').items[0].key.value;
-              const include = parsed.getIn(['jobs', job_name, 'strategy', 'matrix', 'include']);
+              const job_name = doc.get('jobs').items[0].key.value;
+              const include = doc.getIn(['jobs', job_name, 'strategy', 'matrix', 'include']);
               const repos = include.items
                 .map(item => item.items.find(obj => obj.key.value === 'charm-repo').value.value)
                 .map((item, idx) => [item, idx]);
 
               for (const [charm_repo, idx] of repos) {
-                const {value: commit, comment} = parsed.getIn(['jobs', job_name, 'strategy', 'matrix', 'include', idx, 'commit'], true);
+                const node = doc.getIn(['jobs', job_name, 'strategy', 'matrix', 'include', idx, 'commit'], true);
+                const {value: commit, comment} = node;
 
                 console.log({charm_repo, commit, comment});
 
@@ -62,5 +63,11 @@ jobs:
                 console.log(workflow, charm_repo);
                 console.log({commit, new_commit});
                 console.log({comment, new_comment});
+
+                node.value = new_commit;
+                node.comment = new_comment;
               }
+              writeFileSync(workflow, doc.toString(), 'utf8');
             }
+
+      - run: git diff | cat
