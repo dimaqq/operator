@@ -9,7 +9,7 @@ on:
     - cron: '0 18 * * SUN' # Sunday 6pm UTC, before international day starts
 
 jobs:
-  FIXME-name:
+  upgrade-pins:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
