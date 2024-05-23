@@ -65,4 +65,12 @@ jobs:
               writeFileSync(workflow, doc.toString(), 'utf8');
             }
 
-      - run: git diff | cat
+      - run: git diff | cat  # debug only
+      - run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git switch -c auto-upgrade-external-charm-pins
+          git commit -am "ci: upgrade external charm pins"
+          git remote -v
+      - run: |
+          git push -uf origin auto-upgrade-external-charm-pins
