@@ -5,30 +5,10 @@ on:
   push:
     # for dev testing only
   workflow_dispatch:
-    inputs:
-      commit_sha:
-        description: 'Commit SHA'
-        required: true
 
 jobs:
-  show-tags:
+  FIXME-name:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - charm-repo: "canonical/postgresql-operator"
-            workflow: db-charm-tests.yaml
-          - charm-repo: "canonical/postgresql-k8s-operator"
-            workflow: db-charm-tests.yaml
-          - charm-repo: "canonical/mysql-operator"
-            workflow: db-charm-tests.yaml
-          - charm-repo: "canonical/mysql-k8s-operator"
-            workflow: db-charm-tests.yaml
-          - charm-repo: "jnsgruk/hello-kubecon"
-            workflow: hello-charm-tests.yaml
-          - charm-repo: "juju/hello-juju-charm"
-            workflow: hello-charm-tests.yaml
-
     steps:
       - uses: actions/checkout@v2
 
@@ -44,26 +24,43 @@ jobs:
           script: |
             const {readFileSync} = require('fs');
             const {parseDocument} = require('yaml');
+            const space = ' ';
 
-            const charm_repo = '${{ matrix.charm-repo }}';
-            const workflow = '.github/workflows/${{ matrix.workflow }}';
+            const workflows = [
+              '.github/workflows/db-charm-tests.yaml',
+              '.github/workflows/hello-charm-tests.yaml',
+            ];
 
-            const parsed = parseDocument(readFileSync(workflow, 'utf8'));
-            console.log("parsed", parsed);
+            for (const workflow of workflows) {
+              const parsed = parseDocument(readFileSync(workflow, 'utf8'));
 
-            const [owner, repo] = charm_repo.split('/');
-            const details = await github.rest.repos.get({owner, repo });
-            const branch = details.data.default_branch;
+              // it's the first job that's parametrised with external repositories
+              const job_name = parsed.get('jobs').items[0].key.value;
+              const include = parsed.getIn(['jobs', job_name, 'strategy', 'matrix', 'include']);
+              const repos = include.items
+                .map(item => item.items.find(obj => obj.key.value === 'charm-repo').value.value)
+                .map((item, idx) => [item, idx]);
 
-            const resp = await github.rest.repos.listCommits({owner, repo, per_page: 1});
-            const commit = resp.data[0].sha;
-            const timestamp = resp.data[0].commit.committer.date;
-            
-            const tags = await github.rest.repos.listTags({
-              owner: owner,
-              repo: repo,
-            });
+              for (const [charm_repo, idx] of repos) {
+                const {value: commit, comment} = parsed.getIn(['jobs', job_name, 'strategy', 'matrix', 'include', idx, 'commit'], true);
 
-            const matches = tags.data.filter(tag => tag.commit.sha === commit);
-            const tag_line = matches.map(tag => tag.name).join(' ');
-            console.log(workflow, charm_repo, commit, "#", tag_line, timestamp);
+                console.log({charm_repo, commit, comment});
+
+                const [owner, repo] = charm_repo.split('/');
+                const details = await github.rest.repos.get({owner, repo });
+                const branch = details.data.default_branch;
+
+                const resp = await github.rest.repos.listCommits({owner, repo, per_page: 1});
+                const new_commit = resp.data[0].sha;
+                const timestamp = resp.data[0].commit.committer.date;
+                
+                const tags = await github.rest.repos.listTags({owner, repo});
+                const matches = tags.data.filter(tag => tag.commit.sha === new_commit);
+                const tag_line = matches.map(tag => tag.name).join(space);
+                const new_comment = space + [tag_line, timestamp].filter(Boolean).join(space);
+
+                console.log(workflow, charm_repo);
+                console.log({commit, new_commit});
+                console.log({comment, new_comment});
+              }
+            }
