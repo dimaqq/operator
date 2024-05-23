@@ -5,6 +5,8 @@ on:
   push:
     # for dev testing only
   workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * SUN' # Sunday 6pm UTC, before international day starts
 
 jobs:
   FIXME-name:
@@ -44,9 +46,6 @@ jobs:
               for (const [charm_repo, idx] of repos) {
                 const node = doc.getIn(['jobs', job_name, 'strategy', 'matrix', 'include', idx, 'commit'], true);
                 const {value: commit, comment} = node;
-
-                console.log({charm_repo, commit, comment});
-
                 const [owner, repo] = charm_repo.split('/');
                 const details = await github.rest.repos.get({owner, repo });
                 const branch = details.data.default_branch;
@@ -59,10 +58,6 @@ jobs:
                 const matches = tags.data.filter(tag => tag.commit.sha === new_commit);
                 const tag_line = matches.map(tag => tag.name).join(space);
                 const new_comment = space + [tag_line, timestamp].filter(Boolean).join(space);
-
-                console.log(workflow, charm_repo);
-                console.log({commit, new_commit});
-                console.log({comment, new_comment});
 
                 node.value = new_commit;
                 node.comment = new_comment;

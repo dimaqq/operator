@@ -10,9 +10,9 @@ jobs:
       matrix:
         include:
           - charm-repo: jnsgruk/hello-kubecon
-            commit: dbd133466dde59ee64f20a732a8f3d2e560ec3b8  # master, July 3rd, 2023
+            commit: dbd133466dde59ee64f20a732a8f3d2e560ec3b8 # 2023-07-03T14:09:38Z
           - charm-repo: juju/hello-juju-charm
-            commit: 046b8ce758660d5aa9cf05207e2370fcbab688d0  # master, December 16, 2021
+            commit: 046b8ce758660d5aa9cf05207e2370fcbab688d0 # 2021-12-16T10:10:24Z
 
     steps:
       - name: Set up Python 3.8
