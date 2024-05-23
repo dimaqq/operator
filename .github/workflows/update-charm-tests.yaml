@@ -74,3 +74,8 @@ jobs:
           git remote -v
       - run: |
           git push -uf origin auto-upgrade-external-charm-pins
+      - run: |
+          echo "FIXME, to do"
+          # if a PR doesn't exist, create it
+          PR_URL=$(gh pr list --head auto-upgrade-external-charm-pins --json url --jq '.[0].url')
+          if [ -z "$PR_URL" ]; then gh pr create --base main --head auto-upgrade-external-charm-pins
