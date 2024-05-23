@@ -9,6 +9,8 @@ venv
 .vscode
 .coverage
 /.tox
+
+# Tokens and settings for `act` to run GHA locally
 .env
 .envrc
 .secrets
