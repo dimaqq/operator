@@ -19,11 +19,11 @@ jobs:
 
       - uses: ./.github/actions/update-charm-pins
         with:
-          workflow: .github/workflows/db-charm-tests.yaml
-
-      - uses: ./.github/actions/update-charm-pins
-        with:
-          workflow: .github/workflows/hello-charm-tests.yaml
+          workflows:
+            - .github/workflows/db-charm-tests.yaml
+            - .github/workflows/hello-charm-tests.yaml
+            - .github/workflows/charmcraft-pack.yaml
+            - .github/workflows/observability-charm-tests.yaml
 
       - run: git diff | cat  # debug only
       - run: |
@@ -33,9 +33,9 @@ jobs:
           git commit -am "ci: upgrade external charm pins"
           git remote -v
       - run: |
-          git push -uf origin auto-upgrade-external-charm-pins
+          # FIXME change personal fork to real upstream
+          git remote set-url upstream "https://dimaqq:${GITHUB_TOKEN}@github.com/dimaqq/operator.git"
+          git push -uf upstream auto-upgrade-external-charm-pins
       - run: |
-          echo "FIXME, to do"
-          # if a PR doesn't exist, create it
-          PR_URL=$(gh pr list --head auto-upgrade-external-charm-pins --json url --jq '.[0].url')
-          if [ -z "$PR_URL" ]; then gh pr create --base main --head auto-upgrade-external-charm-pins
+          OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
+          test -n "$PR_URL" || gh pr create --base main --head auto-upgrade-external-charm-pins
