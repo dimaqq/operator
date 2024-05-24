@@ -1,0 +1,41 @@
+---
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * SUN' # Sunday 6pm UTC, before international day starts
+
+jobs:
+  upgrade-pins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install yaml
+
+      - uses: ./.github/actions/update-charm-pins
+        with:
+          workflows:
+            - .github/workflows/db-charm-tests.yaml
+            - .github/workflows/hello-charm-tests.yaml
+            - .github/workflows/charmcraft-pack.yaml
+            - .github/workflows/observability-charm-tests.yaml
+
+      - run: git diff | cat  # debug only
+      - run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git switch -c auto-upgrade-external-charm-pins
+          git commit -am "ci: upgrade external charm pins"
+          git remote -v
+      - run: |
+          # FIXME change personal fork to real upstream
+          git remote set-url upstream "https://dimaqq:${GITHUB_TOKEN}@github.com/dimaqq/operator.git"
+          git push -uf upstream auto-upgrade-external-charm-pins
+      - run: |
+          OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
+          test -n "$PR_URL" || gh pr create --base main --head auto-upgrade-external-charm-pins
