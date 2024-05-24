@@ -1,3 +1,7 @@
+# Copyright 2024 Canonical Ltd.
+
+""" Updates pinned versions of charms in tests """
+
 import logging
 import os
 import sys
@@ -18,10 +22,12 @@ github = Client(
 
 
 def update_charm_pins(workflow):
+    """ Update pinned versions of charms in the given github actions workflow """
+
     with open(workflow) as file:
         doc = yaml.load(file)
 
-    # Assume that there's only one job, or the first job is parametrised with charm repos
+    # Assume that there's only one job, or that the first job is parametrised with charm repos
     job_name = next(iter(doc["jobs"]))
 
     for idx, item in enumerate(doc["jobs"][job_name]["strategy"]["matrix"]["include"]):
