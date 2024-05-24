@@ -1,6 +1,6 @@
 # Copyright 2024 Canonical Ltd.
 
-""" Updates pinned versions of charms in tests """
+"""Updates pinned versions of charms in tests."""
 
 import logging
 import os
@@ -22,8 +22,7 @@ github = Client(
 
 
 def update_charm_pins(workflow):
-    """ Update pinned versions of charms in the given github actions workflow """
-
+    """Update pinned versions of charms in the given github actions workflow."""
     with open(workflow) as file:
         doc = yaml.load(file)
 
