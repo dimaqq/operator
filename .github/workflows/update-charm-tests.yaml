@@ -19,11 +19,11 @@ jobs:
 
       - uses: ./.github/actions/update-charm-pins
         with:
-          workflows:
-            - .github/workflows/db-charm-tests.yaml
-            - .github/workflows/hello-charm-tests.yaml
-            - .github/workflows/charmcraft-pack.yaml
-            - .github/workflows/observability-charm-tests.yaml
+          workflows: |-
+            .github/workflows/db-charm-tests.yaml
+            .github/workflows/hello-charm-tests.yaml
+            .github/workflows/charmcraft-pack.yaml
+            .github/workflows/observability-charm-tests.yaml
 
       - run: git diff | cat  # debug only
       - run: |
@@ -34,7 +34,7 @@ jobs:
           git remote -v
       - run: |
           # FIXME change personal fork to real upstream
-          git remote set-url upstream "https://dimaqq:${GITHUB_TOKEN}@github.com/dimaqq/operator.git"
+          git remote set-url upstream "https://dimaqq:${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}@github.com/dimaqq/operator.git"
           git push -uf upstream auto-upgrade-external-charm-pins
       - run: |
           OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)

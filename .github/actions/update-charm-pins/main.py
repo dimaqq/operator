@@ -56,5 +56,5 @@ def update_charm_pins(workflow):
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")
-    for workflow in sys.argv[1:]:
+    for workflow in sys.argv[1].split():
         update_charm_pins(workflow)
