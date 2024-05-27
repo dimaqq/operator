@@ -30,7 +30,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
           #git branch -d auto-upgrade-external-charm-pins || echo "no need for cleanup"
           git switch -C auto-upgrade-external-charm-pins
-          git commit -am "ci: upgrade external charm pins"
+          git commit --allow-empty -am "ci: upgrade external charm pins"
           git push -f --set-upstream origin auto-upgrade-external-charm-pins
       - run: |
           OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
