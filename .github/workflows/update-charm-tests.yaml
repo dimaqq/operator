@@ -17,7 +17,7 @@ jobs:
 
       - uses: ./.github/actions/update-charm-pins
         with:
-          # GHA doesn't allow arrays in action inputs (arguments), so send a whitespace (null) separated string
+          # Whitespace (null) separated string, as workflow inputs are always plain values
           workflows: |-
             .github/workflows/db-charm-tests.yaml
             .github/workflows/hello-charm-tests.yaml
@@ -26,6 +26,7 @@ jobs:
           gh-pat: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
 
       - run: |
+          # Force-push pin changes to the branch
           echo "New changes in charm pins"
           git --no-pager diff
           git config --global user.name "github-actions"
@@ -36,12 +37,16 @@ jobs:
           git --no-pager diff main HEAD
           git push -f --set-upstream origin auto-upgrade-external-charm-pins
       - run: |
+          # Ensure a PR if there are changes, no PR otherwise
           set PR=$(gh pr list --state open --head auto-upgrade-external-charm-pins --json number -q '.[0].number')
           set CHANGES=$(git --no-pager diff --stat main HEAD)
+          echo "Existing PR? $PR"
+          echo "Changes? $CHANGES"
           if [[ -n "$PR" && -z "$CHANGES" ]]; then
+            echo "Closing the existing PR, as there are no changes"
             gh pr close -c stale "$PR";
-          fi
-          if [[ -z "$PR" && -n "$CHANGES" ]]; then
+          elif [[ -z "$PR" && -n "$CHANGES" ]]; then
+            echo "Opening new PR"
             gh pr create --base main --head auto-upgrade-external-charm-pins --title "Update Charm Pins" --body "This is an automated PR to update pins for the external repositories that the operator framework is tested against";
           fi
         env:
