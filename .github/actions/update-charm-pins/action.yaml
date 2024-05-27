@@ -24,3 +24,5 @@ runs:
       shell: bash
     - run: python .github/actions/update-charm-pins/main.py '${{ inputs.workflows }}'
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.gh-pat }}
