@@ -1,4 +1,6 @@
 ---
+name: Update Charm Pins
+
 on:
   push:
   workflow_dispatch:
