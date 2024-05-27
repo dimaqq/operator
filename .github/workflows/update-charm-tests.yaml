@@ -44,8 +44,8 @@ jobs:
           git log origin/main --graph --oneline --decorate --max-count=10
           echo DEBUG
           # Ensure a PR if there are changes, no PR otherwise
-          set PR=$(gh pr list --state open --head auto-upgrade-external-charm-pins --json number -q '.[0].number')
-          set CHANGES=$(git --no-pager diff --stat main HEAD)
+          PR=$(gh pr list --state open --head auto-upgrade-external-charm-pins --json number -q '.[0].number')
+          CHANGES=$(git --no-pager diff --stat main HEAD)
           echo "Existing PR? $PR"
           echo "Changes? $CHANGES"
           if [[ -n "$PR" && -z "$CHANGES" ]]; then
