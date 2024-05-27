@@ -2,6 +2,7 @@
 name: Update Charm Pins
 
 on:
+  # NOTE: to avoid infinite loop, exclude the branch created by this workflow if triggering on push or pull_request
   workflow_dispatch:
   schedule:
     - cron: '0 18 * * SUN' # Sunday 6pm UTC, before international day starts
@@ -16,6 +17,7 @@ jobs:
 
       - uses: ./.github/actions/update-charm-pins
         with:
+          # GHA doesn't allow arrays in action inputs (arguments), so send a whitespace (null) separated string
           workflows: |-
             .github/workflows/db-charm-tests.yaml
             .github/workflows/hello-charm-tests.yaml
@@ -23,15 +25,24 @@ jobs:
             .github/workflows/observability-charm-tests.yaml
           gh-pat: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
 
-      - run: git diff | cat  # debug only
       - run: |
+          echo "New changes in charm pins"
+          git --no-pager diff
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git switch -C auto-upgrade-external-charm-pins
           git commit --allow-empty -am "ci: upgrade external charm pins"
+          echo "Total changes in charm pins"
+          git --no-pager diff main HEAD
           git push -f --set-upstream origin auto-upgrade-external-charm-pins
       - run: |
-          OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
-          test -n "$PR_URL" || gh pr create --base main --head auto-upgrade-external-charm-pins --title "Update Charm Pins" --body "Update Charm Pins"
+          set PR=$(gh pr list --state open --head auto-upgrade-external-charm-pins --json number -q '.[0].number')
+          set CHANGES=$(git --no-pager diff --stat main HEAD)
+          if [[ -n "$PR" -a -z "$CHANGES" ]]; then
+            gh pr close -c stale "$PR";
+          fi
+          if [[ -z "$PR" -a -n "$CHANGES" ]]; then
+            gh pr create --base main --head auto-upgrade-external-charm-pins --title "Update Charm Pins" --body "This is an automated PR to update pins for the external repositories that the operator framework is tested against";
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
