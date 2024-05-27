@@ -2,7 +2,6 @@
 name: Update Charm Pins
 
 on:
-  push:
   workflow_dispatch:
   schedule:
     - cron: '0 18 * * SUN' # Sunday 6pm UTC, before international day starts
@@ -28,7 +27,6 @@ jobs:
       - run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          #git branch -d auto-upgrade-external-charm-pins || echo "no need for cleanup"
           git switch -C auto-upgrade-external-charm-pins
           git commit --allow-empty -am "ci: upgrade external charm pins"
           git push -f --set-upstream origin auto-upgrade-external-charm-pins
