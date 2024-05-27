@@ -18,7 +18,7 @@ jobs:
             .github/workflows/hello-charm-tests.yaml
             .github/workflows/charmcraft-pack.yaml
             .github/workflows/observability-charm-tests.yaml
-          gh-path: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
+          gh-pat: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
 
       - run: git diff | cat  # debug only
       - run: |
