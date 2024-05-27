@@ -28,6 +28,7 @@ jobs:
       - run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+          git branch -d auto-upgrade-external-charm-pins || echo "no need for cleanup"
           git switch -c auto-upgrade-external-charm-pins
           git commit -am "ci: upgrade external charm pins"
           git remote -v
