@@ -26,7 +26,7 @@ def update_charm_pins(workflow):
     with open(workflow) as file:
         doc = yaml.load(file)
 
-    # Assume that only one job is define in the workflow, or that the first job is parametrised with charm repos
+    # Assume the workflow has a single job or the first job is parameterized with charm repos
     job_name = next(iter(doc["jobs"]))
 
     for idx, item in enumerate(doc["jobs"][job_name]["strategy"]["matrix"]["include"]):

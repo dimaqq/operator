@@ -38,10 +38,10 @@ jobs:
       - run: |
           set PR=$(gh pr list --state open --head auto-upgrade-external-charm-pins --json number -q '.[0].number')
           set CHANGES=$(git --no-pager diff --stat main HEAD)
-          if [[ -n "$PR" -a -z "$CHANGES" ]]; then
+          if [[ -n "$PR" && -z "$CHANGES" ]]; then
             gh pr close -c stale "$PR";
           fi
-          if [[ -z "$PR" -a -n "$CHANGES" ]]; then
+          if [[ -z "$PR" && -n "$CHANGES" ]]; then
             gh pr create --base main --head auto-upgrade-external-charm-pins --title "Update Charm Pins" --body "This is an automated PR to update pins for the external repositories that the operator framework is tested against";
           fi
         env:
