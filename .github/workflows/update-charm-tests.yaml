@@ -8,7 +8,7 @@ on:
     - cron: '0 18 * * SUN' # Sunday 6pm UTC, before international day starts
 
 jobs:
-  upgrade-pins:
+  update-pins:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,29 +31,23 @@ jobs:
           git --no-pager diff
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git switch -C auto-upgrade-external-charm-pins
-          git commit --allow-empty -am "ci: upgrade external charm pins"
+          git switch -C auto-update-external-charm-pins
+          git commit --allow-empty -am "ci: update external charm pins"
           echo "Total changes in charm pins"
           git --no-pager diff main HEAD
-          git push -f --set-upstream origin auto-upgrade-external-charm-pins
+          git push -f --set-upstream origin auto-update-external-charm-pins
       - run: |
-          echo DEBUG
-          git branch -v
-          git log --graph --oneline --decorate --max-count=10
-          git log main --graph --oneline --decorate --max-count=10
-          git log origin/main --graph --oneline --decorate --max-count=10
-          echo DEBUG
           # Ensure a PR if there are changes, no PR otherwise
-          PR=$(gh pr list --state open --head auto-upgrade-external-charm-pins --json number -q '.[0].number')
+          PR=$(gh pr list --state open --head auto-update-external-charm-pins --json number -q '.[0].number')
           CHANGES=$(git --no-pager diff --stat main HEAD)
           echo "Existing PR? $PR"
           echo "Changes? $CHANGES"
           if [[ -n "$PR" && -z "$CHANGES" ]]; then
-            echo "Closing the existing PR, as there are no changes"
+            echo "Closing #$PR as stale"
             gh pr close -c stale "$PR";
           elif [[ -z "$PR" && -n "$CHANGES" ]]; then
             echo "Opening new PR"
-            gh pr create --base main --head auto-upgrade-external-charm-pins --title "Update Charm Pins" --body "This is an automated PR to update pins for the external repositories that the operator framework is tested against";
+            gh pr create --base main --head auto-update-external-charm-pins --title "Update Charm Pins" --body "This is an automated PR to update pins of the external repositories that the operator framework is tested against";
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
