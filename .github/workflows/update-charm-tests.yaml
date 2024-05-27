@@ -34,6 +34,6 @@ jobs:
           git push -f --set-upstream origin auto-upgrade-external-charm-pins
       - run: |
           OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
-          test -n "$PR_URL" || gh pr create --base main --head auto-upgrade-external-charm-pins --fill
+          test -n "$PR_URL" || gh pr create --base main --head auto-upgrade-external-charm-pins --title "Update Charm Pins" --body "Update Charm Pins"
         env:
           GITHUB_TOKEN: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
