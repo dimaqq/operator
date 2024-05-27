@@ -29,7 +29,7 @@ jobs:
           git remote -v
       - run: |
           # FIXME change personal fork to real upstream
-          git remote set-url upstream "https://dimaqq:${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}@github.com/dimaqq/operator.git"
+          git remote add upstream "https://dimaqq:${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}@github.com/dimaqq/operator.git"
           git push -uf upstream auto-upgrade-external-charm-pins
       - run: |
           OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
