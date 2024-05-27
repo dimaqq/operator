@@ -32,7 +32,7 @@ jobs:
           git switch -c auto-upgrade-external-charm-pins
           git commit -am "ci: upgrade external charm pins"
       - run: |
-          git push -f
+          git push -f --set-upstream origin auto-upgrade-external-charm-pins
       - run: |
           OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
           test -n "$PR_URL" || gh pr create --base main --head auto-upgrade-external-charm-pins --fill
