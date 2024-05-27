@@ -9,13 +9,7 @@ jobs:
   upgrade-pins:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - run: npm install yaml
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/update-charm-pins
         with:
@@ -24,6 +18,7 @@ jobs:
             .github/workflows/hello-charm-tests.yaml
             .github/workflows/charmcraft-pack.yaml
             .github/workflows/observability-charm-tests.yaml
+          gh-pat: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
 
       - run: git diff | cat  # debug only
       - run: |

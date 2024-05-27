@@ -9,6 +9,9 @@ inputs:
   workflows:
     description: Whitespace-separated paths to the local workflow file, relative to repository root
     required: true
+  gh-pat:
+    description: Personal access token to check out external repos from GitHub
+    required: true
 
 runs:
   using: composite
