@@ -28,7 +28,7 @@ jobs:
           git commit -am "ci: upgrade external charm pins"
           git remote -v
       - run: |  # debug
-          curl -H "Authorization: token ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}" \
+          curl -v -H "Authorization: token ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/ \
                -I | grep "x-oauth-scopes"
