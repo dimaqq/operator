@@ -37,6 +37,12 @@ jobs:
           git --no-pager diff main HEAD
           git push -f --set-upstream origin auto-upgrade-external-charm-pins
       - run: |
+          echo DEBUG
+          git branch -v
+          git log --graph --oneline --decorate --max-count=10
+          git log main --graph --oneline --decorate --max-count=10
+          git log origin/main --graph --oneline --decorate --max-count=10
+          echo DEBUG
           # Ensure a PR if there are changes, no PR otherwise
           set PR=$(gh pr list --state open --head auto-upgrade-external-charm-pins --json number -q '.[0].number')
           set CHANGES=$(git --no-pager diff --stat main HEAD)
