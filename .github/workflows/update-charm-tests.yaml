@@ -27,6 +27,11 @@ jobs:
           git switch -c auto-upgrade-external-charm-pins
           git commit -am "ci: upgrade external charm pins"
           git remote -v
+      - run: |  # debug
+          curl -H "Authorization: token ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/ \
+               -I | grep "x-oauth-scopes"
       - run: |
           # FIXME change personal fork to real upstream
           git remote add upstream "https://dimaqq:${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}@github.com/dimaqq/operator.git"
@@ -34,3 +39,5 @@ jobs:
       - run: |
           OPEN=$(gh pr list --state open --head auto-upgrade-external-charm-pins)
           test -n "$PR_URL" || gh pr create --base main --head auto-upgrade-external-charm-pins
+        env:
+          GITHUB_TOKEN: ${{ secrets.UPDATE_CHARM_PINS_ACCESS_TOKEN }}
