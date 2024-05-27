@@ -10,9 +10,9 @@ jobs:
       matrix:
         include:
           - charm-repo: canonical/postgresql-operator
-            commit: 4feeaeee102cbf5e3dada3c05d44e0495ca68f9a  # rev409 2024-05-21T12:52:24Z
+            commit: 5ef9c536197fa5f99b4cbcca394ccd72708234dd  # 2024-05-24T15:12:47Z
           - charm-repo: canonical/postgresql-k8s-operator
-            commit: 1a25c3929747beea7e78467b169b2b345b29d470  # 2024-05-21T12:40:19Z
+            commit: 582b3b9975b66fb4d1faa3163c485876998b0b91  # rev257 2024-05-25T14:09:32Z
           - charm-repo: canonical/mysql-operator
             commit: 19633f3e904d1c3296477b3df191d1ca265fc0d5  # rev234 2024-05-06T12:13:54Z
           - charm-repo: canonical/mysql-k8s-operator
