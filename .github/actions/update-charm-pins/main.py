@@ -22,7 +22,7 @@ github = Client(
 
 
 def update_charm_pins(workflow):
-    """Update pinned versions of charms in the given github actions workflow."""
+    """Update pinned versions of charms in the given GitHub Actions workflow."""
     with open(workflow) as file:
         doc = yaml.load(file)
 
@@ -31,24 +31,18 @@ def update_charm_pins(workflow):
 
     for idx, item in enumerate(doc["jobs"][job_name]["strategy"]["matrix"]["include"]):
         charm_repo = item["charm-repo"]
-
-        resp = github.get(f"{charm_repo}/commits", params={"per_page": 1})
-        resp.raise_for_status()
-        commit = resp.json()[0]["sha"]
-        timestamp = resp.json()[0]["commit"]["committer"]["date"]
-
-        resp = github.get(f"{charm_repo}/tags")
-        resp.raise_for_status()
+        commit = github.get(f"{charm_repo}/commits").raise_for_status().json()[0]
+        data = github.get(f"{charm_repo}/tags").raise_for_status().json()
         comment = " ".join(
-            [tag["name"] for tag in resp.json() if tag["commit"]["sha"] == commit]
-            + [timestamp]
+            [tag["name"] for tag in data if tag["commit"]["sha"] == commit["sha"]]
+            + [commit["commit"]["committer"]["date"]]
         )
 
         # A YAML node, as opposed to a plain value, can be updated in place to tweak comments
         node = doc.mlget(
             ["jobs", job_name, "strategy", "matrix", "include", idx], list_ok=True
         )
-        node["commit"] = commit
+        node["commit"] = commit["sha"]
         node.yaml_add_eol_comment(comment, key="commit")
 
     with open(workflow, "w") as file:
@@ -57,5 +51,5 @@ def update_charm_pins(workflow):
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")
-    for workflow in sys.argv[1].split():
+    for workflow in " ".join(sys.argv[1:]).split():
         update_charm_pins(workflow)
