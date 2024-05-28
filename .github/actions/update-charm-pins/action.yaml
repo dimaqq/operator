@@ -1,3 +1,4 @@
+---
 name: Update Charm Pins
 description: Updates pinned versions of external charms we use to test our changes against to prevent regressions
 author: Dima Tisnek <dimaqq@gmail.com>
