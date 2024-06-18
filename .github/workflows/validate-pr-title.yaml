@@ -1,5 +1,5 @@
 ---
-name: "Semantic PR Title Check"
+name: "Validate PR Title"
 # Ensure that the PR title conforms to the Conventional Commits and our choice of types and scopes, so that library version bumps can be detected automatically
 
 on:
@@ -8,6 +8,10 @@ on:
 
 permissions:
   pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   main:
@@ -30,11 +34,5 @@ jobs:
             test
           scopes: |
             harness
-            deps
-            testing
-            pebble
-            model
-            framework
-            typing
-            charm
+            [a-z]{3,20}
           requireScope: false
