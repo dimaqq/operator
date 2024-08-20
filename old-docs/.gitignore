@@ -1,7 +1,6 @@
-
-# Starter pack rules start here
 /*env*/
 .sphinx/venv/
+.sphinx/requirements.txt
 .sphinx/warnings.txt
 .sphinx/.wordlist.dic
 .sphinx/.doctrees/
@@ -12,5 +11,3 @@ _build
 __pycache__
 .idea/
 .vscode/
-.sphinx/styles/*
-.sphinx/vale.ini
