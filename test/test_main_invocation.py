@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
 import os
 from pathlib import Path
+from typing import Any, Callable, Mapping, Optional, Type, TypeVar
 from unittest.mock import Mock
 
 import pytest
+from typing_extensions import TypeGuard
 
 import ops
 
@@ -39,8 +42,30 @@ def charm_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     os.environ.pop('OPERATOR_DISPATCH', None)
 
 
+T = TypeVar('T', bound=Callable[..., Any])
+
+
+def type_guard(func: T) -> TypeGuard[T]:
+    assert callable(func)
+    params: Mapping[str, inspect.Parameter] = inspect.signature(func).parameters
+    p1, p2 = tuple(params.values())[:2]
+
+    assert p1.name == 'charm_class'
+    assert p1.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+    assert p1.annotation == Type[ops.charm.CharmBase]
+    assert p1.default is inspect.Parameter.empty
+
+    assert p2.name == 'use_juju_for_storage'
+    assert p2.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+    assert p2.annotation == Optional[bool]
+    assert p2.default is None
+    return True
+
+
 def test_top_level_import(charm_env: None):
     import ops
+
+    assert type_guard(ops.main)
 
     ops.main(ops.CharmBase)
 
@@ -50,6 +75,8 @@ def test_top_level_import(charm_env: None):
 
 def test_top_level_import_legacy_call(charm_env: None):
     import ops
+
+    assert type_guard(ops.main.main)
 
     with pytest.deprecated_call():
         ops.main.main(ops.CharmBase)
@@ -61,6 +88,8 @@ def test_top_level_import_legacy_call(charm_env: None):
 def test_submodule_import(charm_env: None):
     import ops.main
 
+    assert type_guard(ops.main)  # type: ignore
+
     ops.main(ops.CharmBase)  # type: ignore # https://github.com/microsoft/pyright/issues/8830
 
     with pytest.raises(TypeError):
@@ -69,6 +98,8 @@ def test_submodule_import(charm_env: None):
 
 def test_submodule_import_legacy_call(charm_env: None):
     import ops.main
+
+    assert type_guard(ops.main.main)
 
     with pytest.deprecated_call():
         ops.main.main(ops.CharmBase)
@@ -80,6 +111,8 @@ def test_submodule_import_legacy_call(charm_env: None):
 def test_import_from_top_level_module(charm_env: None):
     from ops import main
 
+    assert type_guard(main)
+
     main(ops.CharmBase)
 
     with pytest.raises(TypeError):
@@ -88,6 +121,8 @@ def test_import_from_top_level_module(charm_env: None):
 
 def test_import_from_top_level_module_legacy_call(charm_env: None):
     from ops import main
+
+    assert type_guard(main.main)
 
     with pytest.deprecated_call():
         main.main(ops.CharmBase)
@@ -98,6 +133,8 @@ def test_import_from_top_level_module_legacy_call(charm_env: None):
 
 def test_legacy_import_from_submodule(charm_env: None):
     from ops.main import main
+
+    assert type_guard(main)
 
     with pytest.deprecated_call():
         main(ops.CharmBase)
