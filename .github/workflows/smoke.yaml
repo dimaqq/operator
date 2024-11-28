@@ -1,6 +1,8 @@
 name: ops Smoke Tests
 
 on:
+  # FIXME temp only, don't merge
+  pull_request:
   workflow_dispatch:
   schedule:
     - cron:  '0 7 25 * *'
