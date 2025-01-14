@@ -18,6 +18,8 @@ classifiers = [
 dependencies = [
     "PyYAML==6.*",
     "websocket-client==1.*",
+    "opentelemetry-api~=1.30",  # Fixes older Python type hints
+    "importlib-metadata",
 ]
 dynamic = ["version"]
 
@@ -39,6 +41,11 @@ docs = [
 ]
 testing = [
     "ops-scenario>=7.0.5,<8",
+]
+tracing = [
+    "otlp-json>=0.9.1",
+    "opentelemetry-instrumentation-urllib~=0.51b0",  # decide if we want this
+    "opentelemetry-sdk~=1.30",  # version should match -api
 ]
 # Empty for now, because Harness is bundled with the base install, but allow
 # specifying the extra to ease transition later.

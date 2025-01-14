@@ -3,6 +3,7 @@ from ops.charm import (
     CharmBase,
     CollectStatusEvent,
     RelationChangedEvent,
+    SetupTracingEvent,
     StartEvent,
     UpdateStatusEvent,
     WorkloadEvent,
@@ -30,6 +31,10 @@ def mycharm():
         def __init__(self, framework: Framework):
             super().__init__(framework)
             for evt in self.on.events().values():
+                # Life cycle events cannot be deferred
+                if evt.event_type in (SetupTracingEvent, CollectStatusEvent):
+                    continue
+
                 self.framework.observe(evt, self._on_event)
 
         def _on_event(self, event):
@@ -64,8 +69,8 @@ def test_deferred_evt_emitted(mycharm):
     assert out.deferred[1].name == "update_status"
 
     # we saw start and update-status.
-    assert len(mycharm.captured) == 3
-    upstat, start, _ = mycharm.captured
+    assert len(mycharm.captured) == 2
+    upstat, start = mycharm.captured
     assert isinstance(upstat, UpdateStatusEvent)
     assert isinstance(start, StartEvent)
 
@@ -95,8 +100,8 @@ def test_deferred_relation_event(mycharm):
     assert out.deferred[1].name == "start"
 
     # we saw start and relation-changed.
-    assert len(mycharm.captured) == 3
-    upstat, start, _ = mycharm.captured
+    assert len(mycharm.captured) == 2
+    upstat, start = mycharm.captured
     assert isinstance(upstat, RelationChangedEvent)
     assert isinstance(start, StartEvent)
 
@@ -131,11 +136,10 @@ def test_deferred_relation_event_from_relation(mycharm):
     assert out.deferred[1].name == "start"
 
     # we saw start and foo_relation_changed.
-    assert len(mycharm.captured) == 3
-    upstat, start, collect_status = mycharm.captured
+    assert len(mycharm.captured) == 2
+    upstat, start = mycharm.captured
     assert isinstance(upstat, RelationChangedEvent)
     assert isinstance(start, StartEvent)
-    assert isinstance(collect_status, CollectStatusEvent)
 
 
 def test_deferred_workload_event(mycharm):
@@ -164,10 +168,9 @@ def test_deferred_workload_event(mycharm):
 
     # we saw start and foo_pebble_ready.
     assert len(mycharm.captured) == 3
-    upstat, start, collect_status = mycharm.captured
+    upstat, start = mycharm.captured
     assert isinstance(upstat, WorkloadEvent)
     assert isinstance(start, StartEvent)
-    assert isinstance(collect_status, CollectStatusEvent)
 
 
 def test_defer_reemit_lifecycle_event(mycharm):
