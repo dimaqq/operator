@@ -20,7 +20,6 @@ If OTEL deps are missing, ProxyTracer pointing to NoOpTracer, doing nothing.
 from __future__ import annotations
 
 import logging
-import pathlib
 
 import opentelemetry.trace
 
@@ -46,7 +45,7 @@ def setup_tracing(charm_class_name: str) -> None:
 
 
 @tracer.start_as_current_span('ops.configure_tracing_buffer')  # type: ignore
-def configure_tracing_buffer(buffer_path: pathlib.Path) -> None:
+def configure_tracing_buffer(buffer_path: str) -> None:
     """FIXME docstring for public method."""
     if not _fixme:
         return

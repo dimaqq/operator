@@ -43,20 +43,33 @@ URLLibInstrumentor().instrument()
 _OTLP_SPAN_EXPORTER_TIMEOUT = 1  # seconds
 """How much to give OTLP span exporter has to push traces to the backend."""
 
+SENDOUT_FACTOR = 2
+"""How much buffered chunks to send out for each incoming chunk."""
+
+# FIXME: this creates a separate file next to the CHARM_STATE_FILE
+# We could stuff both kinds of data into the same file, I guess?
+BUFFER_FILE = '.tracing-buffer.db'
+
+
+_exporter: ProxySpanExporter | None = None
+
 
 class ProxySpanExporter(SpanExporter):
     real_exporter: SpanExporter | None
     buffer: _buffer.Buffer
 
-    def __init__(self):
+    def __init__(self, buffer_path: str):
         self.real_exporter = None
-        self.buffer = _buffer.Buffer()
+        # FIXME side-by-side with deferred events db
+        # or in the same file as deferred events db?
+        self.buffer = _buffer.Buffer(buffer_path)
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         """Export a batch of telemetry data.
 
         Note: to avoid data loops or recursion, this function cannot be instrumented.
         """
+        print(f'export {len(spans)=}')
         with suppress_juju_log_handler():
             # Note:
             # this is called in a helper thread, which is daemonic,
@@ -67,31 +80,21 @@ class ProxySpanExporter(SpanExporter):
             # - 2s for live data
             deadline = time.monotonic() + 6
 
-            # FIXME remove this dev crud
-            # __import__("pdb").set_trace()
-            import threading
-
-            print('Ex' * 20 + str(threading.current_thread()))
-
-            if self.real_exporter:
-                buffered = self.buffer.load()
-                print(f'{len(buffered)=}')
-                for chunk in buffered:
-                    if time.monotonic() > deadline:
-                        break
-                    if not self.real_exporter._export(chunk).ok:  # type: ignore
-                        break
-                else:
-                    self.buffer.drop()
-
+            # TODO check if we're ever called with no spans.
+            assert spans
             # Note: [] --> b''
             data: bytes = trace_encoder.encode_spans(spans).SerializePartialToString()
-            print(f'{len(data)=} {len(spans)=}')
+            rv = self.buffer.pump(data)
+            print('saved')
+            assert rv
+            self.do_export(*rv)
 
-            sent = False
-            if self.real_exporter and time.monotonic() < deadline:
-                sent = self.real_exporter.export(spans) == SpanExportResult.SUCCESS
-                print(f'{sent=}')
+            for _ in range(SENDOUT_FACTOR - 1):
+                if time.monotonic() > deadline:
+                    break
+                rv = self.buffer.pump()
+                if rv:
+                    self.do_export(*rv)
 
             # FIXME a couple of strategies are possible, but all thave downsides:
             #
@@ -115,11 +118,15 @@ class ProxySpanExporter(SpanExporter):
             #   if there's a lot of data / receiver is slow,
             #   we'll end up with a grwoing buffer
             #   until such time that buffer is full and is reset
-            if not sent:
-                self.buffer.append(data)
-                print(f'{len(self.buffer)=}')
 
             return SpanExportResult.SUCCESS
+
+    def do_export(self, buffered_id: int, data: bytes) -> None:
+        """Export buffered data and remove it from the buffer on success."""
+        print(f'asked {buffered_id=} {len(data)=}')
+        if self.real_exporter and self.real_exporter._export(data).ok:  # type: ignore
+            print('removing')
+            self.buffer.remove(buffered_id)
 
     def shutdown(self) -> None:
         """Shut down the exporter."""
@@ -132,9 +139,6 @@ class ProxySpanExporter(SpanExporter):
 
     def set_real_exporter(self, exporter: SpanExporter) -> None:
         self.real_exporter = exporter
-
-
-_exporter = ProxySpanExporter()
 
 
 @contextlib.contextmanager
@@ -178,6 +182,7 @@ def get_server_cert(
 
 
 def setup_tracing(charm_class_name: str) -> None:
+    global _exporter
     # FIXME would it be better to pass Juju context explicitly?
     juju_context = ops.jujucontext._JujuContext.from_dict(os.environ)
     app_name = '' if juju_context.unit_name is None else juju_context.unit_name.split('/')[0]
@@ -199,6 +204,8 @@ def setup_tracing(charm_class_name: str) -> None:
 
     # How
 
+    buffer_path = str(juju_context.charm_dir / BUFFER_FILE)
+    _exporter = ProxySpanExporter(buffer_path)
     span_processor = BatchSpanProcessor(_exporter)
     provider.add_span_processor(span_processor)
     print('St' * 50)
@@ -206,16 +213,26 @@ def setup_tracing(charm_class_name: str) -> None:
 
 
 # FIXME make it very cheap to call this method a second time with same arguments
-def configure_tracing_buffer(buffer_path: pathlib.Path) -> None:
+def configure_tracing_buffer(buffer_path: str) -> None:
     # FIXME needs a threading.Lock
-    # or access to underlying BatchXXX lock
-    _exporter.buffer.pivot(buffer_path)
+    # - check _exporter.buffer.path vs new path, do nothing if they are same
+    # - create the new buffer (may be empty or may have data on disk)
+    # - read out chunks from the current buffer (this data is typically newer)
+    # - append to the new buffer (possibly flushing out some older records)
+    if not _exporter:
+        return
+    _exporter.buffer.pivot(buffer_path)  # FIXME
 
 
 # FIXME make it very cheap to call this method a second time with same arguments
 def configure_tracing_destination(url: str) -> None:
     # FIXME needs a threading.Lock
     # or access to underlying BatchXXX lock
+    #
+    # - check if settings are exactly same, do nothing in that case
+    # - replace current exported with a new exporter
+    if not _exporter:
+        return
 
     # real exporter, hardcoded for now
     real_exporter = OTLPSpanExporter(url, timeout=1)

@@ -1801,7 +1801,7 @@ class ExecProcess(Generic[AnyStr]):
         """
         if isinstance(sig, int):
             sig = signal.Signals(sig).name
-        tracer.get_current_trace().set_attribute('signal', sig)  # type: ignore
+        opentelemetry.trace.get_current_span().set_attribute('signal', sig)
         payload = {
             'command': 'signal',
             'signal': {'name': sig},
