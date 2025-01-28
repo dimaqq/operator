@@ -9,7 +9,7 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
-"""FIXME Docstring."""
+"""Buffer for tracing data."""
 
 from __future__ import annotations
 
@@ -25,36 +25,36 @@ from typing import IO
 # TODO: bike-shedding, how much? 40M? 64M? etc.
 # Approximate safety limit for the database file size
 BUFFER_SIZE = 40 * 1024 * 1024
+
 # Default priority for tracing data.
 # Dispatch invocation that doesn't result in any event being observed
 # by charm or its charm lib produces data at this priority.
 DEFAULT_PRIORITY = 10
+
 # Higher priority for data from invocation with observed events.
 OBSERVED_PRIORITY = 50
+
 # Some DB timeout
 # NOTE: we'd want a high initial timeout and low timeout on exit, perhaps?
 DB_TIMEOUT = 60
 
-# Python 3.8 compatibility notes:
-# Python things
-# - tbd
-# Python sqlite3 things
 # - new autocommit flag was added in 3.11
 # - must use isolation_level=None for consistency between Python versions
 # - may want to use isolation_level=None anyway, for manual transaction control
-# Bundled sqlite3 things
-# - version 3.45.1 (tested ub 24.04 deadsnakes python 3.8.20)
-# - version 3.31.1 (originally shipped with Ubuntu 20.04)
 # - can't use the STRICT keyword for tables, requires sqlite 3.37.0
 # - can't use the octet_length() either, requires 3.43.0
-# - not an issue (sqlite < 3.0x.y) https://stackoverflow.com/a/31896266/705086
-# sqlite round() function, since 3.8.5
+#
+# Summary
+#
+# Ubuntu 20.04  Python  3.8.x  Sqlite 3.31.1  Adds UPSERT, window functions
+# Ubuntu 22.04  Python 3.10.x  Sqlite 3.37.2  Adds STRICT tables, JSON ops
+# Ubuntu 24.04  Python 3.12.x  Sqlite 3.45.2  Adds math functions
 
 logger = logging.getLogger(__name__)
 
 
 class Buffer:
-    """FIXME docstring."""
+    """Buffer for tracing data."""
 
     _ids: set[int] | None
     """tracing data ids buffered during this dispatch invocation.
@@ -62,6 +62,7 @@ class Buffer:
     None if we're not recording the ids.
     Access to this attribute is effectively protected by an sqlite transaction.
     """
+
     priority: int = DEFAULT_PRIORITY
     """current priority for tracing data from this dispatch invocation.
 
@@ -89,11 +90,13 @@ class Buffer:
                 )
                 """
             )
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS tracing_priority_id
                 ON tracing
                 (priority, id)
-                """)
+                """
+            )
 
     @contextlib.contextmanager
     # TODO: maybe add a mode="w" flag if read-only transactions are needed
