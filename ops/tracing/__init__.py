@@ -31,25 +31,25 @@ tracer = opentelemetry.trace.get_tracer(__name__)
 
 
 try:
-    from . import _fixme as _fixme
+    from . import _export
 except ImportError:
     logging.exception('FIXME deps')
-    _fixme = None
+    _export = None
 
 
 def setup_tracing(charm_class_name: str) -> None:
     """Setup tracing for this "dispatch" of the charm code."""
-    if not _fixme:
+    if not _export:
         return
-    _fixme.setup_tracing(charm_class_name)
+    _export.setup_tracing(charm_class_name)
 
 
 @tracer.start_as_current_span('ops.configure_tracing_buffer')  # type: ignore
 def configure_tracing_buffer(buffer_path: str) -> None:
     """FIXME docstring for public method."""
-    if not _fixme:
+    if not _export:
         return
-    _fixme.configure_tracing_buffer(buffer_path)
+    _export.configure_tracing_buffer(buffer_path)
 
 
 # FIXME make this cheap to call with very same arguments
@@ -57,17 +57,17 @@ def configure_tracing_buffer(buffer_path: str) -> None:
 @tracer.start_as_current_span('ops.configure_tracing_destination')  # type: ignore
 def configure_tracing_destination(url: str) -> None:
     """FIXME docstring for public method."""
-    if not _fixme:
+    if not _export:
         return
-    _fixme.configure_tracing_destination(url)
+    _export.configure_tracing_destination(url)
 
 
 def shutdown_tracing() -> None:
     """Send out as much as possible, if possible."""
-    if not _fixme:
+    if not _export:
         return
     try:
-        _fixme.shutdown_tracing()
+        _export.shutdown_tracing()
     except Exception:
         logging.exception('failed to flush tracing')
 
