@@ -140,8 +140,10 @@ class SQLiteStorage:
             NoSnapshotError: if there is no snapshot for the given handle_path.
         """
         c = self._db.cursor()
+        print("FIXME", handle_path)
         c.execute('SELECT data FROM snapshot WHERE handle=?', (handle_path,))
         row = c.fetchone()
+        print("FIXME", row)
         if row:
             return pickle.loads(row[0])  # noqa: S301
         raise NoSnapshotError(handle_path)
