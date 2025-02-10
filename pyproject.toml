@@ -44,6 +44,7 @@ testing = [
 ]
 tracing = [
     "opentelemetry-exporter-otlp-proto-http~=1.30",
+    "opentelemetry-exporter-zipkin-json~=1.30.0",
     "opentelemetry-instrumentation-urllib~=0.51b0",  # must match the above
 ]
 # Empty for now, because Harness is bundled with the base install, but allow

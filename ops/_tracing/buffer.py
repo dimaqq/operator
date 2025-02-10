@@ -81,7 +81,7 @@ class Buffer:
     """tracing data ids buffered during this dispatch invocation."""
     observed = False
     """Marks that data from this dispatch invocation has been marked observed."""
-    stored: int|None = None
+    stored: int | None = None
 
     def __init__(self, path: str):
         self.path = path
@@ -252,7 +252,8 @@ class Buffer:
                 SELECT (length(data)+4095)/4096*4096
                 FROM tracing
                 WHERE id = ?
-                """
+                """,
+                (id_,),
             ).fetchone()
 
             if not row:

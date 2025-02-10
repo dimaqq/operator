@@ -16,11 +16,13 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
+import threading
 import time
 from typing import Sequence
 
 from opentelemetry.exporter.otlp.proto.common._internal import trace_encoder
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.zipkin.json import ZipkinExporter  # type: ignore
 from opentelemetry.instrumentation.urllib import URLLibInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
@@ -35,77 +37,99 @@ import ops.log
 # Trace `urllib` usage when talking to Pebble
 URLLibInstrumentor().instrument()
 
-_OTLP_SPAN_EXPORTER_TIMEOUT = 1  # seconds
+# NOTE: nominally int, although float would work just as well in practice
+EXPORTER_TIMEOUT: int = 1  # seconds
 """How much to give OTLP span exporter has to push traces to the backend."""
 
-SENDOUT_FACTOR = 2
-"""How much buffered chunks to send out for each incoming chunk."""
+SENDOUT_FACTOR: int = 2
+"""How many buffered chunks to send out for each incoming chunk."""
 
-# FIXME: this creates a separate file next to the CHARM_STATE_FILE
-# We could stuff both kinds of data into the same file, I guess?
-BUFFER_FILE = '.tracing-data.db'
-# Currently ops.storage keeps one long transaction open for the duration of the
-# the dispatch, which means we can't use the same file from another thread.
-# BUFFER_FILE = '.unit-state.db'
+BUFFER_FILE: str = '.tracing-data.db'
+"""Name of the file whither data is buffered, located next to .unit-state.db."""
 
 
+logger = logging.getLogger(__name__)
 _exporter: ProxySpanExporter | None = None
+
+
+# NOTE: OTEL SDK suppresses errors while exporting data
+# TODO: decide if we need to remove this before going to prod
+logger.addHandler(logging.StreamHandler())
 
 
 class ProxySpanExporter(SpanExporter):
     real_exporter: OTLPSpanExporter | None = None
+    zipkin_exporter: ZipkinExporter | None = None
+    settings: tuple[str | None, str | None] = (None, None)
 
     def __init__(self, buffer_path: str):
         self.buffer = ops._tracing.buffer.Buffer(buffer_path)
+        self.lock = threading.Lock()
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         """Export a batch of telemetry data.
 
         Note: to avoid data loops or recursion, this function cannot be instrumented.
         """
-        with suppress_juju_log_handler():
-            # Note:
-            # this is called in a helper thread, which is daemonic,
-            # the MainThread will wait at most 10s for this thread.
-            # Margins:
-            # - 1s safety margin
-            # - 1s for buffered data time overhang
-            # - 2s for live data
-            deadline = time.monotonic() + 6
+        try:
+            with suppress_juju_log_handler():
+                # Note:
+                # this is called in a helper thread, which is daemonic,
+                # the MainThread will wait at most 10s for this thread.
+                # Margins:
+                # - 1s safety margin
+                # - 1s for buffered data time overhang
+                # - 2s for live data
+                deadline = time.monotonic() + 6
 
-            assert spans  # the BatchSpanProcessor won't call us if there's no data
-            # TODO:  this will change in the JSON experiment
-            data: bytes = trace_encoder.encode_spans(spans).SerializePartialToString()
-            rv = self.buffer.pump(data)
-            assert rv
-            self.do_export(*rv)
-
-            for _ in range(SENDOUT_FACTOR - 1):
-                if time.monotonic() > deadline:
-                    break
-                if not (rv := self.buffer.pump()):
-                    break
+                assert spans  # the BatchSpanProcessor won't call us if there's no data
+                # TODO:  this will change in the JSON experiment
+                data: bytes = trace_encoder.encode_spans(spans).SerializePartialToString()
+                jsons = [s.to_json(indent=None) for s in spans]  # type: ignore
+                f'{{"resourceSpans": [{",".join(jsons)}]}}'
+                rv = self.buffer.pump(data)
+                assert rv
                 self.do_export(*rv)
 
-            return SpanExportResult.SUCCESS
+                for _ in range(SENDOUT_FACTOR - 1):
+                    if time.monotonic() > deadline:
+                        break
+                    if not (rv := self.buffer.pump()):
+                        break
+                    self.do_export(*rv)
+
+                url, ca = self.settings
+                assert url
+                url = url.replace('4318', '4317')
+                print(url, ca)
+                # rv = requests.post(
+                #  url,
+                #  data=json_payload,
+                #  headers= {"Content-Type": "application/json"}, verify=ca,)
+                # print(rv)
+                assert self.zipkin_exporter
+                print(self.zipkin_exporter.export(spans))
+                return SpanExportResult.SUCCESS
+        except Exception:
+            logger.exception('export')
+            raise
 
     def do_export(self, buffered_id: int, data: bytes) -> None:
         """Export buffered data and remove it from the buffer on success."""
         # TODO:  this will change in the JSON experiment
-        if self.real_exporter and self.real_exporter._export(data).ok:
+        exporter = self.real_exporter
+        return
+        if exporter and exporter._export(data).ok:
             self.buffer.remove(buffered_id)
 
     def shutdown(self) -> None:
         """Shut down the exporter."""
-        if self.real_exporter:
-            self.real_exporter.shutdown()
+        if exporter := self.real_exporter:
+            exporter.shutdown()
 
     def force_flush(self, timeout_millis: int = 30000) -> bool:
         """No-op, as the real exporter doesn't buffer."""
         return True
-
-    def set_real_exporter(self, exporter: OTLPSpanExporter) -> None:
-        self.real_exporter = exporter
 
 
 @contextlib.contextmanager
@@ -132,6 +156,16 @@ def setup_tracing(charm_class_name: str) -> None:
 
     resource = Resource.create(
         attributes={
+            # https://opentelemetry.io/docs/languages/sdk-configuration/general/
+            # https://github.com/open-telemetry/semantic-conventions/tree/main/docs/resource#semantic-attributes-with-dedicated-environment-variable
+            #
+            # OTEL defines some standard-ish attributes:
+            # service.name        required
+            # service.instance.id recommended
+            # service.namespace   recommended -- maybe model name?
+            # service.version     recommended
+            # Following same attribute names as charm_tracing lib
+            # FIXME: decide if it makes sense
             'service.name': service_name,
             'compose_service': service_name,  # FIXME why is this copy needed?
             'charm_type': charm_class_name,
@@ -153,33 +187,50 @@ def setup_tracing(charm_class_name: str) -> None:
     set_tracer_provider(provider)
 
 
-# FIXME make it very cheap to call this method a second time with same arguments
 def set_tracing_destination(
     *,
     url: str | None,
     ca: str | None,
 ) -> None:
-    # FIXME needs a threading.Lock
-    # or access to underlying BatchXXX lock
-    #
-    # - check if settings are exactly same, do nothing in that case
-    # - replace current exported with a new exporter
+    # FIXME only if it's a path, obv...
+    # should we also check that this path exists?
     if ca is not None and not ca.startswith('/'):
         raise ValueError(f'{ca=} must be an absolute path')
-    assert _exporter
 
-    # real exporter, hardcoded for now
-    real_exporter = OTLPSpanExporter(url, timeout=1)
-    # This is actually the max delay value in the sequence 1, 2, ..., MAX
-    # Set to 1 to disable sending live data (buffered data is still eventually sent)
-    # Set to 2 (or more) to enable sending live data (after buffered)
-    #
-    # _MAX_RETRY_TIMEOUT = 2 with timeout=1 means:
-    # - 1 attempt to send live, 1s sleep in the worst case
-    # _MAX_RETRY_TIMEOUT = 3 or 4 with timeout=1 means:
-    # - 1st attempt, 1s sleep, 2nd attempt, 1s sleep in the worst case
-    real_exporter._MAX_RETRY_TIMEOUT = 2  # pyright: ignore[reportAttributeAccessIssue]
-    _exporter.set_real_exporter(real_exporter)
+    assert _exporter, 'tracing has not been set up'
+    with _exporter.lock:
+        if (url, ca) != _exporter.settings:
+            if url:
+                # real exporter, hardcoded for now
+                real_exporter = OTLPSpanExporter(url, timeout=EXPORTER_TIMEOUT)
+                # FIXME: shouldn't be hardcoded...
+                # FIXME API design: if it OK to force the protocol and endpoint
+                # switch onto the charmers, our users?
+                #
+                # OTLP protobuf URL is  host:4318/v1/traces
+                # Zipkin v2 JSON URL is host:9411/api/v2/spans
+                #
+                json_url = 'http://localhost:9411/api/v2/spans'
+                # TODO: session=<custom session that groks ca= better>
+                zipkin_exporter = ZipkinExporter(
+                    endpoint=json_url, timeout=EXPORTER_TIMEOUT
+                )  # FIXME timeout, etc
+                # This is actually the max delay value in the sequence 1, 2, ..., MAX
+                # Set to 1 to disable sending live data (buffered data is still eventually sent)
+                # Set to 2 (or more) to enable sending live data (after buffered)
+                #
+                # _MAX_RETRY_TIMEOUT = 2 with timeout=1 means:
+                # - 1 attempt to send live, 1s sleep in the worst case
+                # _MAX_RETRY_TIMEOUT = 3 or 4 with timeout=1 means:
+                # - 1st attempt, 1s sleep, 2nd attempt, 1s sleep in the worst case
+                real_exporter._MAX_RETRY_TIMEOUT = 2  # pyright: ignore[reportAttributeAccessIssue]
+            else:
+                real_exporter = zipkin_exporter = None
+
+            _exporter.real_exporter = real_exporter
+            _exporter.zipkin_exporter = zipkin_exporter
+            _exporter.settings = (url, ca)
+
     _exporter.buffer.mark_observed()
 
 

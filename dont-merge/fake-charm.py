@@ -70,7 +70,6 @@ class FakeCharm(ops.CharmBase):
     def _on_start(self, event: ops.StartEvent) -> None:
         """Dummy docstring."""
         self.dummy_load(event, 0.0025)
-        # FIXME https://github.com/canonical/operator/issues/1561
         event.defer()
 
     def _on_db_ready(self, event: DatabaseReadyEvent) -> None:

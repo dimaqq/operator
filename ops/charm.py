@@ -1180,6 +1180,11 @@ class CollectStatusEvent(LifecycleEvent):
             model_.unit._collected_statuses.append(status)
 
 
+# FIXME: API design choice
+# Should we make this more generic?
+# - call this a TelemetryEvent / TelemeryConfigEvent / SetupTelemetryEvent
+# - provide .set_tracing_destination() in this PR
+# - later, perhaps .set_logging_xxx() and .set_metrics_yyy()?
 class SetupTracingEvent(LifecycleEvent):
     """FIXME docstring."""
 
