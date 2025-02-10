@@ -22,7 +22,6 @@ from typing import Sequence
 
 from opentelemetry.exporter.otlp.proto.common._internal import trace_encoder
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.exporter.zipkin.json import ZipkinExporter  # type: ignore
 from opentelemetry.instrumentation.urllib import URLLibInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
@@ -59,7 +58,6 @@ logger.addHandler(logging.StreamHandler())
 
 class ProxySpanExporter(SpanExporter):
     real_exporter: OTLPSpanExporter | None = None
-    zipkin_exporter: ZipkinExporter | None = None
     settings: tuple[str | None, str | None] = (None, None)
 
     def __init__(self, buffer_path: str):
@@ -85,8 +83,6 @@ class ProxySpanExporter(SpanExporter):
                 assert spans  # the BatchSpanProcessor won't call us if there's no data
                 # TODO:  this will change in the JSON experiment
                 data: bytes = trace_encoder.encode_spans(spans).SerializePartialToString()
-                jsons = [s.to_json(indent=None) for s in spans]  # type: ignore
-                f'{{"resourceSpans": [{",".join(jsons)}]}}'
                 rv = self.buffer.pump(data)
                 assert rv
                 self.do_export(*rv)
@@ -98,17 +94,6 @@ class ProxySpanExporter(SpanExporter):
                         break
                     self.do_export(*rv)
 
-                url, ca = self.settings
-                assert url
-                url = url.replace('4318', '4317')
-                print(url, ca)
-                # rv = requests.post(
-                #  url,
-                #  data=json_payload,
-                #  headers= {"Content-Type": "application/json"}, verify=ca,)
-                # print(rv)
-                assert self.zipkin_exporter
-                print(self.zipkin_exporter.export(spans))
                 return SpanExportResult.SUCCESS
         except Exception:
             logger.exception('export')
@@ -118,7 +103,6 @@ class ProxySpanExporter(SpanExporter):
         """Export buffered data and remove it from the buffer on success."""
         # TODO:  this will change in the JSON experiment
         exporter = self.real_exporter
-        return
         if exporter and exporter._export(data).ok:
             self.buffer.remove(buffered_id)
 
@@ -210,11 +194,16 @@ def set_tracing_destination(
                 # OTLP protobuf URL is  host:4318/v1/traces
                 # Zipkin v2 JSON URL is host:9411/api/v2/spans
                 #
-                json_url = 'http://localhost:9411/api/v2/spans'
+                # FIXME: on the other hand, Jaeger 2 should accept OTLP JSON too
+                # https://www.jaegertracing.io/docs/2.3/apis/#opentelemetry-protocol
+                #
+                # The real question is what COS and COS-lite accept.
+                #
+                # json_url = 'http://localhost:9411/api/v2/spans'
                 # TODO: session=<custom session that groks ca= better>
-                zipkin_exporter = ZipkinExporter(
-                    endpoint=json_url, timeout=EXPORTER_TIMEOUT
-                )  # FIXME timeout, etc
+                # zipkin_exporter = ZipkinExporter(
+                #    endpoint=json_url, timeout=EXPORTER_TIMEOUT
+                # )
                 # This is actually the max delay value in the sequence 1, 2, ..., MAX
                 # Set to 1 to disable sending live data (buffered data is still eventually sent)
                 # Set to 2 (or more) to enable sending live data (after buffered)
@@ -225,10 +214,9 @@ def set_tracing_destination(
                 # - 1st attempt, 1s sleep, 2nd attempt, 1s sleep in the worst case
                 real_exporter._MAX_RETRY_TIMEOUT = 2  # pyright: ignore[reportAttributeAccessIssue]
             else:
-                real_exporter = zipkin_exporter = None
+                real_exporter = None
 
             _exporter.real_exporter = real_exporter
-            _exporter.zipkin_exporter = zipkin_exporter
             _exporter.settings = (url, ca)
 
     _exporter.buffer.mark_observed()
