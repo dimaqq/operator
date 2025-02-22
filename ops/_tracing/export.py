@@ -19,6 +19,7 @@ import os
 import ssl
 import threading
 import time
+import urllib.error
 import urllib.request
 from typing import Sequence
 
@@ -135,7 +136,6 @@ class ProxySpanExporter(SpanExporter):
 
     def do_export(self, buffered_id: int, data: bytes, mime: str) -> None:
         """Export buffered data and remove it from the buffer on success."""
-        print(self.settings, len(data), mime)
         url, ca = self.settings
         if not url:
             return
@@ -147,21 +147,29 @@ class ProxySpanExporter(SpanExporter):
         assert url.startswith(('http://', 'https://'))
         context = self.ssl_context(ca) if url.startswith('https://') else None
 
-        with urllib.request.urlopen(  # noqa: S310
-            urllib.request.Request(  # noqa: S310
-                url,
-                data=data,
-                headers={'Content-Type': mime},
-                method='POST',
-            ),
-            context=context,
-        ) as rv:
-            # from typing_extensions import reveal_type
-            # reveal_type(rv.status)  # Any
-            #
-            # FIXME: .status requires Python 3.9+, WAT?
-            if rv.status < 300:
-                self.buffer.remove(buffered_id)
+        try:
+            with urllib.request.urlopen(  # noqa: S310
+                urllib.request.Request(  # noqa: S310
+                    url,
+                    data=data,
+                    headers={'Content-Type': mime},
+                    method='POST',
+                ),
+                context=context,
+                                        ): pass
+        except urllib.error.HTTPError as e:
+            # FIXME drop this later
+            # - perhaps the collector is shot
+            # - or there's a bug converting spans to JSON
+            # if it's the latter, the response test/JSON is helpful
+            resp = e.fp.read()
+            print("FIXME", e.code, str(resp)[:1000])
+        except (urllib.error.URLError, TimeoutError, ssl.SSLError):
+            pass
+        except Exception:
+            logger.exception("Failed to send telemetry out")
+        else:
+            self.buffer.remove(buffered_id)
 
     def shutdown(self) -> None:
         """Shut down the exporter."""
