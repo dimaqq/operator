@@ -32,7 +32,6 @@ colorama==0.4.6
 deprecated==1.2.15
     # via
     #   opentelemetry-api
-    #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-semantic-conventions
 docutils==0.21.2
     # via
@@ -46,8 +45,6 @@ gitdb==4.0.12
     # via gitpython
 gitpython==3.1.44
     # via canonical-sphinx-extensions
-googleapis-common-protos==1.66.0
-    # via opentelemetry-exporter-otlp-proto-http
 h11==0.14.0
     # via uvicorn
 html5lib==1.1
@@ -84,44 +81,32 @@ mdurl==0.1.2
     # via markdown-it-py
 myst-parser==4.0.0
     # via ops (pyproject.toml)
-opentelemetry-api==1.29.0
+opentelemetry-api==1.30.0
     # via
-    #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-urllib
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   ops (pyproject.toml)
-opentelemetry-exporter-otlp-proto-common==1.29.0
-    # via opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-http==1.29.0
+opentelemetry-instrumentation==0.51b0
+    # via opentelemetry-instrumentation-urllib
+opentelemetry-instrumentation-urllib==0.51b0
     # via ops (pyproject.toml)
-opentelemetry-instrumentation==0.50b0
-    # via
-    #   opentelemetry-instrumentation-urllib
-opentelemetry-instrumentation-urllib==0.50b0
+opentelemetry-sdk==1.30.0
     # via ops (pyproject.toml)
-opentelemetry-proto==1.29.0
-    # via
-    #   opentelemetry-exporter-otlp-proto-common
-    #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.29.0
-    # via opentelemetry-exporter-otlp-proto-http
-opentelemetry-semantic-conventions==0.50b0
+opentelemetry-semantic-conventions==0.51b0
     # via
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-urllib
     #   opentelemetry-sdk
-opentelemetry-util-http==0.50b0
+opentelemetry-util-http==0.51b0
     # via opentelemetry-instrumentation-urllib
+otlp-json==0.9.1
+    # via ops (pyproject.toml)
 packaging==24.2
     # via
     #   opentelemetry-instrumentation
     #   sphinx
-protobuf==5.29.3
-    # via
-    #   googleapis-common-protos
-    #   opentelemetry-proto
 pygments==2.19.1
     # via
     #   furo
@@ -137,7 +122,6 @@ pyyaml==6.0.2
 requests==2.32.3
     # via
     #   canonical-sphinx-extensions
-    #   opentelemetry-exporter-otlp-proto-http
     #   sphinx
 six==1.17.0
     # via html5lib
@@ -219,7 +203,6 @@ wrapt==1.17.2
     # via
     #   deprecated
     #   opentelemetry-instrumentation
-    #   opentelemetry-instrumentation-dbapi
 zipp==3.21.0
     # via importlib-metadata
 ./testing/
