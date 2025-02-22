@@ -105,7 +105,7 @@ class Buffer:
                     priority INTEGER NOT NULL,
                     -- a chunk of tracing data
                     data BLOB NOT NULL,
-                    -- MIME type for that chunk
+                    -- MIME type for these data
                     mime TEXT NOT NULL
                 )
                 """
@@ -132,13 +132,6 @@ class Buffer:
             else:
                 conn.execute('COMMIT')
 
-    # TODO:
-    # add some retry mechanism...
-    # when database is written to from two threads,
-    # either we'd get an exaception on BEGIN (immediate mode)
-    # or we'd get an exception on COMMIT (deferred mode)
-    # either way, a retry will be needed sooner or later.
-
     @retry
     def mark_observed(self):
         if self.observed:
@@ -157,30 +150,25 @@ class Buffer:
         self.ids.clear()
 
     @retry
-    def pump(self, data: tuple[bytes, str] | None = None) -> tuple[int, bytes, str] | None:
+    def pump(self, record: tuple[bytes, str] | None = None) -> tuple[int, bytes, str] | None:
         """Pump the buffer queue.
 
         Accepts an optional new data chunk.
         Removes old, boring data if needed.
         Returns the oldest important record.
         """
-        # NOTE: discussion about transaction type:
-        # - this may be a read-only transaction (no data to save, read out one record)
-        # - or a read transaction later upgraded to write (check space, then delete some)
-        # currently I've made `self.tx()` return a write transaction always
-        # which is safer, but may incur a filesystem modification cost.
-        chunk, mime = data if data else (None, None)
-        chunklen = 0 if chunk is None else (len(chunk) + 4095) // 4096 * 4096
+        data, mime = record if record else (None, None)
+        stored_size = 0 if data is None else (len(data) + 4095) // 4096 * 4096
         collected_size = 0
 
-        with self.tx(readonly=not chunk) as conn:
-            if chunk:
+        with self.tx(readonly=not data) as conn:
+            if data:
                 # Ensure that there's enough space in the buffer
 
                 # TODO: expose `stored` in metrics, one day
                 if self.stored is None:
                     self.stored = self._stored_size(conn)
-                excess = self.stored + chunklen - BUFFER_SIZE
+                excess = self.stored + stored_size - BUFFER_SIZE
 
                 if excess > 0:
                     # Drop lower-priority, older data
@@ -215,14 +203,14 @@ class Buffer:
                     INSERT INTO tracing (priority, data, mime)
                     VALUES (?, ?, ?)
                     """,
-                    (priority, chunk, mime),
+                    (priority, data, mime),
                 )
 
                 assert cursor.lastrowid is not None
                 if not self.observed:
                     self.ids.add(cursor.lastrowid)
 
-            # Return oldest important data
+            # Return oldest important data, if any
             rv = conn.execute(
                 """
                 SELECT id, data, mime
@@ -233,7 +221,7 @@ class Buffer:
             ).fetchone()
 
         assert self.stored is not None
-        self.stored += chunklen - collected_size
+        self.stored += stored_size - collected_size
         return rv
 
     def _stored_size(self, conn: sqlite3.Connection) -> int:
@@ -249,7 +237,8 @@ class Buffer:
     @retry
     def remove(self, id_: int) -> None:
         with self.tx() as conn:
-            # NOTE: can't use the RETURNING clause
+            # NOTE: the RETURNING clause would be ideal here, but it can't be used.
+            # Sqlite shipped with Python 3.8 is too old.
             row = conn.execute(
                 """
                 SELECT (length(data)+4095)/4096*4096

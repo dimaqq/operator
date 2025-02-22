@@ -14,7 +14,7 @@ Run Jaeger all-in-one to collect traces on your machine:
 
 After which, you should be able to:
 - generate some traces (see below)
-- open http://<ip address>:16686/ in your browser, perhaps localhost:16686
+- open `http://<ip address>:16686/` in your browser, perhaps http://localhost:16686/
 - select the correct **Service** (application name)
 - click Search at the bottom of the form
 
