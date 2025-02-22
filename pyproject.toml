@@ -18,7 +18,7 @@ classifiers = [
 dependencies = [
     "PyYAML==6.*",
     "websocket-client==1.*",
-    "opentelemetry-api~=1.30",  # Fixes older Python type hints
+    "opentelemetry-api~=1.30",  # 1.30 required for type hints on Python 3.8
     "importlib-metadata",
 ]
 dynamic = ["version"]
@@ -44,7 +44,13 @@ testing = [
 ]
 tracing = [
     "otlp-json>=0.9.1",
-    "opentelemetry-instrumentation-urllib~=0.51b0",  # decide if we want this
+    # FIXME: decision needed
+    # On one hand, this instrumenttion provides additional info about pebble
+    # (request URL, status code, post and response data sizes)
+    # On the other, the exporter uses urllib too...
+    # I think (but need to check again), that OTEL disables instrumentation
+    # while doing OTEL-ley things, like exporing traces.
+    "opentelemetry-instrumentation-urllib~=0.51b0",
     "opentelemetry-sdk~=1.30",  # version should match -api
 ]
 # Empty for now, because Harness is bundled with the base install, but allow

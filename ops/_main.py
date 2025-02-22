@@ -563,8 +563,6 @@ def main(charm_class: Type[ops.charm.CharmBase], use_juju_for_storage: Optional[
     """
     ops._tracing.setup_tracing(charm_class.__name__)
 
-    # opentelemetry-api types are broken
-    # https://github.com/open-telemetry/opentelemetry-python/issues/3836
     try:
         with tracer.start_as_current_span('ops.main'):
             manager = _Manager(charm_class, use_juju_for_storage=use_juju_for_storage)
