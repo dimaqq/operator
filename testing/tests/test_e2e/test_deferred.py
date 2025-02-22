@@ -1,9 +1,8 @@
 import pytest
 from ops.charm import (
     CharmBase,
-    CollectStatusEvent,
+    LifecycleEvent,
     RelationChangedEvent,
-    SetupTracingEvent,
     StartEvent,
     UpdateStatusEvent,
     WorkloadEvent,
@@ -31,8 +30,7 @@ def mycharm():
         def __init__(self, framework: Framework):
             super().__init__(framework)
             for evt in self.on.events().values():
-                # Life cycle events cannot be deferred
-                if evt.event_type in (SetupTracingEvent, CollectStatusEvent):
+                if issubclass(evt.event_type,  LifecycleEvent):
                     continue
 
                 self.framework.observe(evt, self._on_event)
@@ -167,7 +165,7 @@ def test_deferred_workload_event(mycharm):
     assert out.deferred[1].name == "start"
 
     # we saw start and foo_pebble_ready.
-    assert len(mycharm.captured) == 3
+    assert len(mycharm.captured) == 2
     upstat, start = mycharm.captured
     assert isinstance(upstat, WorkloadEvent)
     assert isinstance(start, StartEvent)
@@ -183,7 +181,9 @@ def test_defer_reemit_lifecycle_event(mycharm):
     state_2 = ctx.run(ctx.on.start(), state_1)
 
     assert [type(e).__name__ for e in ctx.emitted_events] == [
+        "SetupTracingEvent",
         "UpdateStatusEvent",
+        "SetupTracingEvent",
         "UpdateStatusEvent",
         "StartEvent",
     ]
@@ -202,7 +202,9 @@ def test_defer_reemit_relation_event(mycharm):
     state_2 = ctx.run(ctx.on.start(), state_1)
 
     assert [type(e).__name__ for e in ctx.emitted_events] == [
+        "SetupTracingEvent",
         "RelationCreatedEvent",
+        "SetupTracingEvent",
         "RelationCreatedEvent",
         "StartEvent",
     ]
