@@ -118,6 +118,16 @@ class Buffer:
                 (priority, id)
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS settings (
+                    -- setting key, like "url" and "ca"
+                    key TEXT PRIMARY KEY,
+                    -- the value, with None coerced to empty string
+                    value TEXT NOT NULL
+                )
+                """
+            )
 
     @contextlib.contextmanager
     def tx(self, *, timeout: float = DB_TIMEOUT, readonly: bool = False):
@@ -132,6 +142,18 @@ class Buffer:
                 raise
             else:
                 conn.execute('COMMIT')
+
+    @retry
+    def get_destination(self) -> tuple[str | None, str | None]:
+        with self.tx(readonly=True) as conn:
+            settings = {k: v for k, v in conn.execute("""SELECT key, value FROM settings""")}
+            return settings.get("url") or None, settings.get("ca") or None
+
+    @retry
+    def set_destination(self, url: str | None, ca: str | None) -> None:
+        with self.tx() as conn:
+            conn.execute("""REPLACE INTO settings(key, value) VALUES('url', ?)""", (url or "",))
+            conn.execute("""REPLACE INTO settings(key, value) VALUES('ca', ?)""", (ca or "",))
 
     # FIXME: currently unused
     # If most charms observe the CollectStatusEvent, then an event is observed on every dispatch.

@@ -15,14 +15,13 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import os
 import ssl
 import threading
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Sequence
+from typing import Generator, Sequence
 
 import otlp_json
 from opentelemetry.instrumentation.urllib import URLLibInstrumentor
@@ -33,8 +32,8 @@ from opentelemetry.trace import get_tracer_provider, set_tracer_provider
 
 import ops
 import ops._tracing.buffer
-import ops.jujucontext
 import ops.log
+from ops.jujucontext import _JujuContext
 
 # Trace `urllib` usage when talking to Pebble
 URLLibInstrumentor().instrument()
@@ -60,7 +59,6 @@ logger.addHandler(logging.StreamHandler())
 
 
 class ProxySpanExporter(SpanExporter):
-    settings: tuple[str | None, str | None] = (None, None)
     cache: dict[str | None, ssl.SSLContext]
 
     def __init__(self, buffer_path: Path | str):
@@ -86,7 +84,6 @@ class ProxySpanExporter(SpanExporter):
 
                 assert spans  # the BatchSpanProcessor won't call us if there's no data
                 # TODO:  this will change in the JSON experiment
-                # __import__("pdb").set_trace()
                 # FIXME can't use stock exporter, must DIY
 
                 rv = self.buffer.pump((otlp_json.encode_spans(spans), otlp_json.CONTENT_TYPE))
@@ -139,7 +136,7 @@ class ProxySpanExporter(SpanExporter):
 
     def do_export(self, buffered_id: int, data: bytes, mime: str) -> None:
         """Export buffered data and remove it from the buffer on success."""
-        url, ca = self.settings
+        url, ca = self.buffer.get_destination()
         if not url:
             return
 
@@ -200,10 +197,9 @@ def suppress_juju_log_handler():
         juju_log_handler.drop.reset(token)
 
 
-def setup_tracing(charm_class_name: str) -> None:
+@contextlib.contextmanager
+def setup_tracing(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
     global _exporter
-    # FIXME would it be better to pass Juju context explicitly?
-    juju_context = ops.jujucontext._JujuContext.from_dict(os.environ)
     # FIXME is it ever possible for unit_name to be unset (empty)?
     app_name, unit_number = juju_context.unit_name.split('/', 1)
     # FIXME we could get charmhub charm name from self.meta.name, but only later
@@ -224,6 +220,10 @@ def setup_tracing(charm_class_name: str) -> None:
     span_processor = BatchSpanProcessor(_exporter)
     provider.add_span_processor(span_processor)
     set_tracer_provider(provider)
+    try:
+        yield
+    finally:
+        shutdown_tracing()
     # FIXME: in testing with tracing, we need a hack.
     # OpenTelemetry disallows setting the tracer provider twice,
     # a warning is issued and new provider is ignored.
@@ -246,7 +246,11 @@ def set_tracing_destination(
     """
     if not _exporter:
         return
-    _exporter.settings = (url, ca)
+
+    settings = (url, ca)
+    if settings == _exporter.buffer.get_destination():
+        return
+    _exporter.buffer.set_destination(*settings)
 
 
 def mark_observed() -> None:

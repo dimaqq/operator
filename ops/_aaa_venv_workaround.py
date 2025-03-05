@@ -9,7 +9,14 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
-"""Workarounds for various Juju bugs."""
+"""Workarounds for various Juju bugs.
+
+https://github.com/juju/charm/pull/435
+
+> It is important to note that this change will only ensure the proper cleanup of files
+> for charms that are newly deployed, as charms that are already deployed have their
+> manifests written to the manifest files on disk.
+"""
 
 from __future__ import annotations
 
