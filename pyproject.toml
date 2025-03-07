@@ -44,17 +44,7 @@ testing = [
     "ops-scenario>=7.0.5,<8",
 ]
 tracing = [
-    "otlp-json>=0.9.7",
-    # FIXME: decision needed
-    #
-    # On one hand, this instrumentation provides additional info about pebble
-    # (request URL, status code, post and response data sizes)
-    #
-    # On the other, the exporter uses urllib too, yet
-    # OTEL disables instrumentation while exporting traces.
-    "opentelemetry-instrumentation-urllib~=0.51b0",
-    "opentelemetry-sdk~=1.30",
-    "pydantic",
+    "ops-tracing>=2.19.0",
 ]
 # Empty for now, because Harness is bundled with the base install, but allow
 # specifying the extra to ease transition later.
