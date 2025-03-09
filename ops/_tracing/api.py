@@ -19,6 +19,7 @@ from dataclasses import asdict
 
 import ops
 from ops._tracing import _Config
+from ops.charm import RelationRole
 
 from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer import (
     CertificateTransferRequires,
@@ -44,7 +45,7 @@ from .vendor.charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequi
 # ```
 # {"receivers": ["otlp_http"]}
 # ```
-# 
+#
 # - client reads this from remote_app_data:
 # ```
 # {"receivers": [
@@ -58,7 +59,7 @@ from .vendor.charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequi
 
 
 class Tracing(ops.Object):
-    """FIXME docstring."""
+    """Tracing service."""
 
     _certificate_transfer: CertificateTransferRequires | None
 
@@ -69,37 +70,50 @@ class Tracing(ops.Object):
         ca_relation_name: str | None = None,
         ca_data: str | None = None,
     ):
-        """FIXME docstring.
+        """Initialise the tracing service.
 
-        Include `ops[tracing]` in your dependencies.
+        Args:
+            charm: your charm instange
+            tracing_relation_name: the name of the relation that provides the
+                destination to send tracing data to.
+            ca_relation_name: the name of the relation that provides the CA
+                list to validate the tracing destination against.
+            ca_data: a fixed CA list (PEM bundle, a multi-line string).
 
-        Declare the relations that the charm supports:
+        If the destination is resolved to an HTTPS URL, a CA list is required
+        to establish a secure connection.
 
-        ```yaml
-        requires:
-            charm-tracing:
-                interface: tracing
-                limit: 1
-                optional: true
-            send-ca-cert:
-                interface: certificate_transfer
-                limit: 1
-                optional: true
-        ```
+        The CA list can be provided over a relation via ``ca_relation_name=``
+        argument, as a fixed string via ``ca_data`` argument, or the system CA
+        list will be used if the earlier two are both ``None``.
 
-        Initialise the tracing thing (FIXME) with the names of these relations.
+        Usage:
+            - Include ``ops[tracing]`` in your dependencies.
+            - Declare the relations that the charm supports.
+            - Initialise ``Tracing`` with the names of these relations.
 
-        ```py
-        import ops.tracing
+        Example::
+            # charmcraft.yaml
+            requires:
+                charm-tracing:
+                    interface: tracing
+                    limit: 1
+                    optional: true
+                send-ca-cert:
+                    interface: certificate_transfer
+                    limit: 1
+                    optional: true
 
-        class SomeCharm(ops.CharmBase):
-            def __init__(self, framework: ops.Framework):
-                ...
-                self._tracing = ops.tracing.Tracing(
-                    tracing_relation_name="charm-tracing",
-                    ca_relation_name="send-ca-cart",
-                )
-        ```
+            # src/charm.py
+            import ops.tracing
+
+            class SomeCharm(ops.CharmBase):
+                def __init__(self, framework: ops.Framework):
+                    ...
+                    self.tracing = ops.tracing.Tracing(
+                        tracing_relation_name="charm-tracing",
+                        ca_relation_name="send-ca-cart",
+                    )
         """
         super().__init__(charm, f'{tracing_relation_name}+{ca_relation_name}')
         self.charm = charm
@@ -107,8 +121,19 @@ class Tracing(ops.Object):
         self.ca_relation_name = ca_relation_name
         self.ca_data = ca_data
 
-        # FIXME: Pietro recommends inspecting charm meta to validate the interface name
-        assert self.charm.meta.relations[tracing_relation_name].interface_name == 'tracing'
+        # NOTE: Pietro recommends inspecting charm meta to validate the relation
+        # that way a badly written charm crashes in early testing.
+        if not (relation := self.charm.meta.relations.get(tracing_relation_name)):
+            raise ValueError(f'{tracing_relation_name} is not declared in charm metadata')
+        if (relation_role := relation.role) is not RelationRole.requires:
+            raise ValueError(
+                f"{tracing_relation_name} {relation_role=} when 'requires' is expected"
+            )
+        if (interface_name := relation.interface_name) != 'tracing':
+            raise ValueError(
+                f"{tracing_relation_name=} {interface_name=} when 'tracing' is expected"
+            )
+
         self._tracing = TracingEndpointRequirer(
             self.charm,
             tracing_relation_name,
@@ -121,12 +146,7 @@ class Tracing(ops.Object):
         # RelationRoleMismatchError,
 
         for event in (
-            # FIXME: validate this
-            # - the start event may happen after relation-joined?
-            # - the k8s container died and got restarted
-            # - the vm [smth] crashed and got restarted
             self.charm.on.start,
-            # In case the previous charm version has a relation but didn't save the URL
             self.charm.on.upgrade_charm,
             self._tracing.on.endpoint_changed,
             self._tracing.on.endpoint_removed,
@@ -135,11 +155,20 @@ class Tracing(ops.Object):
 
         self._certificate_transfer = None
         if ca_relation_name:
+            if not (relation := self.charm.meta.relations.get(ca_relation_name)):
+                raise ValueError(f'{ca_relation_name} is not declared in charm metadata')
+            if (relation_role := relation.role) is not RelationRole.requires:
+                raise ValueError(
+                    f"{ca_relation_name} {relation_role=} when 'requires' is expected"
+                )
+            if (interface_name := relation.interface_name) != 'certificate_transfer':
+                raise ValueError(
+                    f"{ca_relation_name=} {interface_name=} when 'certificate_transfer' "
+                    'is expected'
+                )
+
             self._certificate_transfer = CertificateTransferRequires(charm, ca_relation_name)
-            assert (
-                self.charm.meta.relations[ca_relation_name].interface_name
-                == 'certificate_transfer'
-            )
+
             for event in (
                 self._certificate_transfer.on.certificate_set_updated,
                 self._certificate_transfer.on.certificates_removed,
@@ -168,8 +197,8 @@ class Tracing(ops.Object):
         ca_rel_id = ca_rel.id if ca_rel else None
 
         if ca_rel and self._certificate_transfer.is_ready(ca_rel):
-            return _Config(url, '\n'.join(
-                sorted(self._certificate_transfer.get_all_certificates(ca_rel_id))
-            ))
+            return _Config(
+                url, '\n'.join(sorted(self._certificate_transfer.get_all_certificates(ca_rel_id)))
+            )
         else:
             return _Config(None, None)

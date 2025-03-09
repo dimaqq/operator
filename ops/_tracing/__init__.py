@@ -18,6 +18,7 @@ TODO: quick start, usage example.
 
 from __future__ import annotations
 
+import warnings
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Generator
@@ -29,12 +30,14 @@ from ops.jujucontext import _JujuContext
 
 tracer = opentelemetry.trace.get_tracer('ops', ops.version.version)
 
+
 @dataclass
 class _Config:
     """Tracing destination configuration.
 
     NOTE: that empty string values may be coerced to None.
     """
+
     url: str | None
     """The URL to send tracing data to."""
     ca: str | None
@@ -50,9 +53,19 @@ try:
 except ImportError:
 
     def mark_observed() -> None: ...
-    def set_tracing_destination(config: _Config) -> None: ...
+
+    def set_tracing_destination(config: _Config) -> None:
+        warnings.warn(
+            'Tracing is not enabled, but set_tracing_destination() was called. '
+            "Ensure 'ops[tracing]' is installed.",
+            UserWarning,
+            stacklevel=3,
+        )
+
     @contextmanager
-    def setup_tracing(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
+    def setup_tracing(
+        juju_context: _JujuContext, charm_class_name: str
+    ) -> Generator[None, None, None]:
         yield
 
 

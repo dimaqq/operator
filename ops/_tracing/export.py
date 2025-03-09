@@ -196,7 +196,9 @@ def suppress_juju_log_handler():
 
 
 @contextlib.contextmanager
-def setup_tracing(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
+def setup_tracing(
+    juju_context: _JujuContext, charm_class_name: str
+) -> Generator[None, None, None]:
     global _exporter
     # FIXME is it ever possible for unit_name to be unset (empty)?
     app_name, unit_number = juju_context.unit_name.split('/', 1)
@@ -234,9 +236,9 @@ def set_tracing_destination(config: _Config) -> None:
     """Configure the destination service for tracing data.
 
     Args:
-        url: The URL of the telemetry service to send tracing data to.
-        ca: The PEM formatted CA list.
-            Only in use if the URL is an HTTPS URL.
+        config: destination configuration with two fields: ``.url``, the URL of the
+            telemetry service to send tracing data to and ``.ca``, the CA list (PEM
+            bundle, a multi-line string) if the URL is an HTTPS URL.
     """
     if not _exporter:
         return

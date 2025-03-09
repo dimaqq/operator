@@ -27,8 +27,8 @@ if '' not in sys.path:
     sys.path.insert(0, '')
 
 
-import ops.testing
 import ops._tracing
+import ops.testing
 from ops.jujucontext import _JujuContext
 
 

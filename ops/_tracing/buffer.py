@@ -149,13 +149,17 @@ class Buffer:
     def get_destination(self) -> _Config:
         with self.tx(readonly=True) as conn:
             settings = {k: v for k, v in conn.execute("""SELECT key, value FROM settings""")}
-            return _Config(settings.get("url") or None, settings.get("ca") or None)
+            return _Config(settings.get('url') or None, settings.get('ca') or None)
 
     @retry
     def set_destination(self, config: _Config) -> None:
         with self.tx() as conn:
-            conn.execute("""REPLACE INTO settings(key, value) VALUES('url', ?)""", (config.url or "",))
-            conn.execute("""REPLACE INTO settings(key, value) VALUES('ca', ?)""", (config.ca or "",))
+            conn.execute(
+                """REPLACE INTO settings(key, value) VALUES('url', ?)""", (config.url or '',)
+            )
+            conn.execute(
+                """REPLACE INTO settings(key, value) VALUES('ca', ?)""", (config.ca or '',)
+            )
 
     # FIXME: currently unused
     # If most charms observe the CollectStatusEvent, then an event is observed on every dispatch.
