@@ -33,6 +33,7 @@ from opentelemetry.trace import get_tracer_provider, set_tracer_provider
 import ops
 import ops._tracing.buffer
 import ops.log
+from ops._tracing import _Config
 from ops.jujucontext import _JujuContext
 
 # Trace `urllib` usage when talking to Pebble
@@ -83,9 +84,6 @@ class ProxySpanExporter(SpanExporter):
                 deadline = time.monotonic() + 6
 
                 assert spans  # the BatchSpanProcessor won't call us if there's no data
-                # TODO:  this will change in the JSON experiment
-                # FIXME can't use stock exporter, must DIY
-
                 rv = self.buffer.pump((otlp_json.encode_spans(spans), otlp_json.CONTENT_TYPE))
                 assert rv
                 self.do_export(*rv)
@@ -136,21 +134,21 @@ class ProxySpanExporter(SpanExporter):
 
     def do_export(self, buffered_id: int, data: bytes, mime: str) -> None:
         """Export buffered data and remove it from the buffer on success."""
-        url, ca = self.buffer.get_destination()
-        if not url:
+        config = self.buffer.get_destination()
+        if not config.url:
             return
 
         # FIXME cache
 
         # FIXME: is this custom code worth it?
         # or would it be easier and safer to use `requests`?
-        assert url.startswith(('http://', 'https://'))
-        context = self.ssl_context(ca) if url.startswith('https://') else None
+        assert config.url.startswith(('http://', 'https://'))
+        context = self.ssl_context(config.ca) if config.url.startswith('https://') else None
 
         try:
             with urllib.request.urlopen(  # noqa: S310
                 urllib.request.Request(  # noqa: S310
-                    url,
+                    config.url,
                     data=data,
                     headers={'Content-Type': mime},
                     method='POST',
@@ -232,11 +230,7 @@ def setup_tracing(juju_context: _JujuContext, charm_class_name: str) -> Generato
     # get_tracer_provider()._resource = resource
 
 
-def set_tracing_destination(
-    *,
-    url: str | None,
-    ca: str | None = None,
-) -> None:
+def set_tracing_destination(config: _Config) -> None:
     """Configure the destination service for tracing data.
 
     Args:
@@ -247,10 +241,9 @@ def set_tracing_destination(
     if not _exporter:
         return
 
-    settings = (url, ca)
-    if settings == _exporter.buffer.get_destination():
+    if config == _exporter.buffer.get_destination():
         return
-    _exporter.buffer.set_destination(*settings)
+    _exporter.buffer.set_destination(config)
 
 
 def mark_observed() -> None:

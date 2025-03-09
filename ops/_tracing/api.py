@@ -15,17 +15,46 @@
 
 from __future__ import annotations
 
-from typing import Any
+from dataclasses import asdict
 
 import ops
+from ops._tracing import _Config
 
 from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer import (
     CertificateTransferRequires,
 )
 from .vendor.charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 
-# NOTE: the shape of certificate_transfer is `{"certificates": list[str]}`
-# it is trivial to read the certificates out manually
+# FIXME: shall we re-code databags in pure Python?
+# - we'd get rid of pydantic dependency
+# - we'd avoid init-time relation listing and databag update (tracing)
+# - it's trivial to read the relation data bags, see below.
+#
+#
+# certificate_transfer:
+# - client doesn't write to the databag
+# - client reads this from the databag:
+# ```
+# {"certificates": list[str]}
+# ```
+#
+#
+# tracing:
+# - client leader sets own app data on every relation:
+# ```
+# {"receivers": ["otlp_http"]}
+# ```
+# 
+# - client reads this from remote_app_data:
+# ```
+# {"receivers": [
+#     {
+#         "protocol": {"name": "otlp_http", "type": "http"},
+#         "url": "http//somewhere:4318/v1/traces",
+#     },
+#     ...,
+# ]}
+# ```
 
 
 class Tracing(ops.Object):
@@ -51,9 +80,11 @@ class Tracing(ops.Object):
             charm-tracing:
                 interface: tracing
                 limit: 1
+                optional: true
             send-ca-cert:
                 interface: certificate_transfer
                 limit: 1
+                optional: true
         ```
 
         Initialise the tracing thing (FIXME) with the names of these relations.
@@ -83,8 +114,11 @@ class Tracing(ops.Object):
             tracing_relation_name,
             protocols=['otlp_http'],
         )
-
-        # TODO: COS requirer
+        # FIXME: handle the vendored charm lib init-time exceptions
+        # convert the to ValueError() I think...
+        # RelationNotFoundError,
+        # RelationInterfaceMismatchError,
+        # RelationRoleMismatchError,
 
         for event in (
             # FIXME: validate this
@@ -112,31 +146,30 @@ class Tracing(ops.Object):
             ):
                 self.framework.observe(event, self._reconcile)
 
-    def _reconcile(self, _event: Any):
-        url, ca = self._get_config()
-        self.charm.set_tracing_destination(url=url, ca=ca)
+    def _reconcile(self, _event: ops.EventBase):
+        self.charm.set_tracing_destination(**asdict(self._get_config()))
 
-    def _get_config(self) -> tuple[str | None, str | None]:
+    def _get_config(self) -> _Config:
         if not self._tracing.is_ready():
-            return None, None
+            return _Config(None, None)
 
         url = self._tracing.get_endpoint('otlp_http')
 
         if not url or not url.startswith(('http://', 'https://')):
-            return None, None
+            return _Config(None, None)
 
         if url.startswith('http://'):
-            return url, None
+            return _Config(url, None)
 
         if not self._certificate_transfer:
-            return url, self.ca_data
+            return _Config(url, self.ca_data)
 
         ca_rel = self.model.get_relation(self.ca_relation_name) if self.ca_relation_name else None
         ca_rel_id = ca_rel.id if ca_rel else None
 
         if ca_rel and self._certificate_transfer.is_ready(ca_rel):
-            return url, '\n'.join(
+            return _Config(url, '\n'.join(
                 sorted(self._certificate_transfer.get_all_certificates(ca_rel_id))
-            )
+            ))
         else:
-            return None, None
+            return _Config(None, None)

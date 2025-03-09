@@ -23,6 +23,8 @@ from typing import Callable
 from typing_extensions import ParamSpec, TypeVar
 from typing_extensions import reveal_type as reveal_type  # FIXME
 
+from ops._tracing import _Config
+
 # Approximate safety limit for the database file size
 BUFFER_SIZE = 40 * 1024 * 1024
 
@@ -144,16 +146,16 @@ class Buffer:
                 conn.execute('COMMIT')
 
     @retry
-    def get_destination(self) -> tuple[str | None, str | None]:
+    def get_destination(self) -> _Config:
         with self.tx(readonly=True) as conn:
             settings = {k: v for k, v in conn.execute("""SELECT key, value FROM settings""")}
-            return settings.get("url") or None, settings.get("ca") or None
+            return _Config(settings.get("url") or None, settings.get("ca") or None)
 
     @retry
-    def set_destination(self, url: str | None, ca: str | None) -> None:
+    def set_destination(self, config: _Config) -> None:
         with self.tx() as conn:
-            conn.execute("""REPLACE INTO settings(key, value) VALUES('url', ?)""", (url or "",))
-            conn.execute("""REPLACE INTO settings(key, value) VALUES('ca', ?)""", (ca or "",))
+            conn.execute("""REPLACE INTO settings(key, value) VALUES('url', ?)""", (config.url or "",))
+            conn.execute("""REPLACE INTO settings(key, value) VALUES('ca', ?)""", (config.ca or "",))
 
     # FIXME: currently unused
     # If most charms observe the CollectStatusEvent, then an event is observed on every dispatch.

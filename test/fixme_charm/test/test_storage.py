@@ -19,6 +19,7 @@ import pytest
 
 import ops._tracing
 import ops.testing
+from ops._tracing import _Config
 
 _pydantic = pytest.importorskip('pydantic')
 _export = pytest.importorskip('ops._tracing.export')
@@ -37,7 +38,7 @@ def test_https_tracing_destination(
     ctx.run(ctx.on.relation_changed([https_relation, ca_relation][relation_to_poke]), state)
 
     assert ops._tracing.export._exporter
-    assert ops._tracing.export._exporter.buffer.get_destination() == (
+    assert ops._tracing.export._exporter.buffer.get_destination() == _Config(
         'https://tls.example/v1/traces',
         'FIRST\nSECOND',
     )
