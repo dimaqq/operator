@@ -48,6 +48,7 @@ tracing = [
     # "ops-tracing>=2.19.0",
     # the old way
     "otlp-json>=0.9.7",
+    "opentelemetry-instrumentation-logging~=0.51b0",  # FIXME: decide if this helps pebble traces
     "opentelemetry-instrumentation-urllib~=0.51b0",  # FIXME: decide if this helps pebble traces
     "opentelemetry-sdk~=1.30",
     "pydantic",

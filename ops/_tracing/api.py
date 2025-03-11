@@ -112,7 +112,7 @@ class Tracing(ops.Object):
                     ...
                     self.tracing = ops.tracing.Tracing(
                         tracing_relation_name="charm-tracing",
-                        ca_relation_name="send-ca-cart",
+                        ca_relation_name="send-ca-cert",
                     )
         """
         super().__init__(charm, f'{tracing_relation_name}+{ca_relation_name}')
@@ -124,10 +124,10 @@ class Tracing(ops.Object):
         # NOTE: Pietro recommends inspecting charm meta to validate the relation
         # that way a badly written charm crashes in early testing.
         if not (relation := self.charm.meta.relations.get(tracing_relation_name)):
-            raise ValueError(f'{tracing_relation_name} is not declared in charm metadata')
+            raise ValueError(f'{tracing_relation_name=} is not declared in charm metadata')
         if (relation_role := relation.role) is not RelationRole.requires:
             raise ValueError(
-                f"{tracing_relation_name} {relation_role=} when 'requires' is expected"
+                f"{tracing_relation_name=} {relation_role=} when 'requires' is expected"
             )
         if (interface_name := relation.interface_name) != 'tracing':
             raise ValueError(
@@ -156,10 +156,10 @@ class Tracing(ops.Object):
         self._certificate_transfer = None
         if ca_relation_name:
             if not (relation := self.charm.meta.relations.get(ca_relation_name)):
-                raise ValueError(f'{ca_relation_name} is not declared in charm metadata')
+                raise ValueError(f'{ca_relation_name=} is not declared in charm metadata')
             if (relation_role := relation.role) is not RelationRole.requires:
                 raise ValueError(
-                    f"{ca_relation_name} {relation_role=} when 'requires' is expected"
+                    f"{ca_relation_name=} {relation_role=} when 'requires' is expected"
                 )
             if (interface_name := relation.interface_name) != 'certificate_transfer':
                 raise ValueError(

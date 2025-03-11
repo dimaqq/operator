@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Generator, Sequence
 
 import otlp_json
+from opentelemetry.instrumentation.logging import LoggingInstrumentor  # type: ignore
 from opentelemetry.instrumentation.urllib import URLLibInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
@@ -37,6 +38,7 @@ from ops._tracing import _Config
 from ops.jujucontext import _JujuContext
 
 # Trace `urllib` usage when talking to Pebble
+LoggingInstrumentor().instrument(format=ops.log._DEBUG_FORMAT)
 URLLibInstrumentor().instrument()
 
 # NOTE: nominally int, although float would work just as well in practice

@@ -26,6 +26,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .model import _ModelBackend
 
+_DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
+
 
 class JujuLogHandler(logging.Handler):
     """A handler for sending logs and warnings to Juju via juju-log."""
@@ -113,7 +115,7 @@ def setup_root_logging(
 
     if debug:
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
+        formatter = logging.Formatter(_DEBUG_FORMAT)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 

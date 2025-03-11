@@ -34,6 +34,7 @@ import typing
 import warnings
 import weakref
 from abc import ABC, abstractmethod
+from contextlib import nullcontext
 from pathlib import Path, PurePath
 from typing import (
     Any,
@@ -3343,37 +3344,42 @@ class _ModelBackend:
         use_json: bool = False,
         input_stream: Optional[str] = None,
     ) -> Union[str, Any, None]:
-        kwargs = {
-            'stdout': subprocess.PIPE,
-            'stderr': subprocess.PIPE,
-            'check': True,
-            'encoding': 'utf-8',
-        }
-        if input_stream:
-            kwargs.update({'input': input_stream})
-        which_cmd = shutil.which(args[0])
-        if which_cmd is None:
-            raise RuntimeError(f'command not found: {args[0]}')
-        args = (which_cmd,) + args[1:]
-        if use_json:
-            args += ('--format=json',)
-        # TODO(benhoyt): all the "type: ignore"s below kinda suck, but I've
-        #                been fighting with Pyright for half an hour now...
-        try:
-            with tracer.start_as_current_span(f'subprocess.run({args[0]})') as span:
+        # Logs are collected via log integration, omit the subprocess calls that push
+        # same content to juju.
+        mgr = nullcontext() if args == "juju-log" else tracer.start_as_current_span(f'args[0]')
+        with mgr as span:
+            if span:
+                span.set_attribute('call', "subprocess.run")
                 span.set_attribute('argv', args)
+            kwargs = {
+                'stdout': subprocess.PIPE,
+                'stderr': subprocess.PIPE,
+                'check': True,
+                'encoding': 'utf-8',
+            }
+            if input_stream:
+                kwargs.update({'input': input_stream})
+            which_cmd = shutil.which(args[0])
+            if which_cmd is None:
+                raise RuntimeError(f'command not found: {args[0]}')
+            args = (which_cmd,) + args[1:]
+            if use_json:
+                args += ('--format=json',)
+            # TODO(benhoyt): all the "type: ignore"s below kinda suck, but I've
+            #                been fighting with Pyright for half an hour now...
+            try:
                 result = subprocess.run(args, **kwargs)  # type: ignore
-        except subprocess.CalledProcessError as e:
-            raise ModelError(e.stderr) from e
-        if return_output:
-            if result.stdout is None:  # type: ignore
-                return ''
-            else:
-                text: str = result.stdout  # type: ignore
-                if use_json:
-                    return json.loads(text)  # type: ignore
+            except subprocess.CalledProcessError as e:
+                raise ModelError(e.stderr) from e
+            if return_output:
+                if result.stdout is None:  # type: ignore
+                    return ''
                 else:
-                    return text  # type: ignore
+                    text: str = result.stdout  # type: ignore
+                    if use_json:
+                        return json.loads(text)  # type: ignore
+                    else:
+                        return text  # type: ignore
 
     @staticmethod
     def _is_relation_not_found(model_error: Exception) -> bool:

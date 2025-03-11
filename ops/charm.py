@@ -499,6 +499,8 @@ class RelationEvent(HookEvent):
         self.relation = relation
         if app is None:
             logger.warning("'app' expected but not received.")
+            import os
+            logger.warning("FIXME %s", os.environ)
             # Do an explicit assignment here so that we can contain the type: ignore.
             self.app = None  # type: ignore
         else:
