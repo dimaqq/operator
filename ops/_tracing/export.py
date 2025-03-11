@@ -63,7 +63,16 @@ class LogsToEvents(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         span = get_current_span()
         if span and span.is_recording():
-            span.add_event(record.getMessage(), {'severity': record.levelname})
+            try:
+                message = record.getMessage()
+                level = record.levelname
+            except Exception as e:
+                # This should never happen, except if the charm includes custom logging
+                # library like structlog that enriches both the format and record attributes,
+                # or if the record format doesn't match the arguments.
+                message = f"log record error {e}"
+                level = "UNKNOWN"
+            span.add_event(message, {'level': level})
 
 
 class ProxySpanExporter(SpanExporter):
