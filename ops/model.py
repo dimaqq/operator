@@ -3345,8 +3345,8 @@ class _ModelBackend:
         input_stream: Optional[str] = None,
     ) -> Union[str, Any, None]:
         # Logs are collected via log integration, omit the subprocess calls that push
-        # same content to juju.
-        mgr = nullcontext() if args == 'juju-log' else tracer.start_as_current_span(args[0])
+        # the same content to juju.
+        mgr = nullcontext() if args[0] == 'juju-log' else tracer.start_as_current_span(args[0])
         with mgr as span:
             if span:
                 span.set_attribute('call', 'subprocess.run')
