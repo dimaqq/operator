@@ -3350,7 +3350,9 @@ class _ModelBackend:
         with mgr as span:
             if span:
                 span.set_attribute('call', 'subprocess.run')
-                span.set_attribute('argv', args)
+                # Some hook tool command line arguments may include sensitive data
+                truncate = args[0] in ["action-set"]
+                span.set_attribute('argv', [args[0], "..."] if truncate else args)
             kwargs = {
                 'stdout': subprocess.PIPE,
                 'stderr': subprocess.PIPE,
