@@ -24,12 +24,11 @@ from pathlib import Path
 from typing import Generator, Sequence
 
 import otlp_json
-from opentelemetry.instrumentation.logging import LoggingInstrumentor  # type: ignore
 from opentelemetry.instrumentation.urllib import URLLibInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
-from opentelemetry.trace import get_tracer_provider, set_tracer_provider
+from opentelemetry.trace import get_current_span, get_tracer_provider, set_tracer_provider
 
 import ops
 import ops._tracing.buffer
@@ -38,7 +37,6 @@ from ops._tracing import _Config
 from ops.jujucontext import _JujuContext
 
 # Trace `urllib` usage when talking to Pebble
-LoggingInstrumentor().instrument(format=ops.log._DEBUG_FORMAT)
 URLLibInstrumentor().instrument()
 
 # NOTE: nominally int, although float would work just as well in practice
@@ -59,6 +57,13 @@ _exporter: ProxySpanExporter | None = None
 # NOTE: OTEL SDK suppresses errors while exporting data
 # FIXME: decide if we need to remove this before going to prod
 logger.addHandler(logging.StreamHandler())
+
+
+class LogsToEvents(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        span = get_current_span()
+        if span and span.is_recording():
+            span.add_event(record.getMessage(), {'severity': record.levelname})
 
 
 class ProxySpanExporter(SpanExporter):
@@ -222,6 +227,8 @@ def setup_tracing(
     span_processor = BatchSpanProcessor(_exporter)
     provider.add_span_processor(span_processor)
     set_tracer_provider(provider)
+    if not any(isinstance(h, LogsToEvents) for h in logging.root.handlers):
+        logging.root.addHandler(LogsToEvents())
     try:
         yield
     finally:
