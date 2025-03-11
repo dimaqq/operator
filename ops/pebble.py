@@ -1739,7 +1739,7 @@ class ExecProcess(Generic[AnyStr]):
             ChangeError: if there was an error starting or running the process.
             ExecError: if the process exits with a non-zero exit code.
         """
-        with tracer.start_as_current_span('ops.pebble.ExecProcess.wait'):
+        with tracer.start_as_current_span('pebble wait'):
             exit_code = self._wait()
             if exit_code != 0:
                 raise ExecError(self._command, exit_code, None, None)
@@ -1791,7 +1791,7 @@ class ExecProcess(Generic[AnyStr]):
             ExecError: if the process exits with a non-zero exit code.
             TypeError: if :meth:`Client.exec` was called with the ``stdout`` argument.
         """
-        with tracer.start_as_current_span('ops.pebble.ExecProcess.wait_output'):
+        with tracer.start_as_current_span('pebble wait_output'):
             if self.stdout is None:
                 raise TypeError(
                     "can't use wait_output() when exec was called with the stdout argument; "
@@ -1828,7 +1828,7 @@ class ExecProcess(Generic[AnyStr]):
             sig: Name or number of signal to send, e.g., "SIGHUP", 1, or
                 signal.SIGHUP.
         """
-        with tracer.start_as_current_span('ops.pebble.ExecProcess.send_signal') as span:
+        with tracer.start_as_current_span('pebble send_signal') as span:
             if isinstance(sig, int):
                 sig = signal.Signals(sig).name
             span.set_attribute('signal', sig)
@@ -2106,13 +2106,13 @@ class Client:
 
     def get_system_info(self) -> SystemInfo:
         """Get system info."""
-        with tracer.start_as_current_span('ops.pebble.Client.get_system_info'):
+        with tracer.start_as_current_span('pebble get_system_info'):
             resp = self._request('GET', '/v1/system-info')
             return SystemInfo.from_dict(resp['result'])
 
     def get_warnings(self, select: WarningState = WarningState.PENDING) -> List[Warning]:
         """Get list of warnings in given state (pending or all)."""
-        with tracer.start_as_current_span('ops.pebble.Client.get_warnings') as span:
+        with tracer.start_as_current_span('pebble get_warnings') as span:
             query = {'select': select.value}
             span.set_attributes(query)
             resp = self._request('GET', '/v1/warnings', query)
@@ -2120,7 +2120,7 @@ class Client:
 
     def ack_warnings(self, timestamp: datetime.datetime) -> int:
         """Acknowledge warnings up to given timestamp, return number acknowledged."""
-        with tracer.start_as_current_span('ops.pebble.Client.ack_warnings'):
+        with tracer.start_as_current_span('pebble ack_warnings'):
             body = {'action': 'okay', 'timestamp': timestamp.isoformat()}
             resp = self._request('POST', '/v1/warnings', body=body)
             return resp['result']
@@ -2131,7 +2131,7 @@ class Client:
         service: Optional[str] = None,
     ) -> List[Change]:
         """Get list of changes in given state, filter by service name if given."""
-        with tracer.start_as_current_span('ops.pebble.Client.get_changes') as span:
+        with tracer.start_as_current_span('pebble get_changes') as span:
             query: Dict[str, Union[str, int]] = {'select': select.value}
             if service is not None:
                 query['for'] = service
@@ -2141,13 +2141,13 @@ class Client:
 
     def get_change(self, change_id: ChangeID) -> Change:
         """Get single change by ID."""
-        with tracer.start_as_current_span('ops.pebble.Client.get_change'):
+        with tracer.start_as_current_span('pebble get_change'):
             resp = self._request('GET', f'/v1/changes/{change_id}')
             return Change.from_dict(resp['result'])
 
     def abort_change(self, change_id: ChangeID) -> Change:
         """Abort change with given ID."""
-        with tracer.start_as_current_span('ops.pebble.Client.abort_change'):
+        with tracer.start_as_current_span('pebble abort_change'):
             body = {'action': 'abort'}
             resp = self._request('POST', f'/v1/changes/{change_id}', body=body)
             return Change.from_dict(resp['result'])
@@ -2271,7 +2271,7 @@ class Client:
         timeout: Optional[float],
         delay: float,
     ) -> ChangeID:
-        with tracer.start_as_current_span(f'ops.pebble.Client.{action}_services') as span:
+        with tracer.start_as_current_span(f'pebble {action}_services') as span:
             if isinstance(services, (str, bytes)) or not hasattr(services, '__iter__'):
                 raise TypeError(
                     f'services must be of type Iterable[str], not {type(services).__name__}'
@@ -2316,7 +2316,7 @@ class Client:
         Raises:
             TimeoutError: If the maximum timeout is reached.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.wait_change'):
+        with tracer.start_as_current_span('pebble wait_change'):
             try:
                 return self._wait_change_using_wait(change_id, timeout)
             except NotImplementedError:
@@ -2385,7 +2385,7 @@ class Client:
         raise TimeoutError(f'timed out waiting for change {change_id} ({timeout} seconds)')
 
     def _checks_action(self, action: str, checks: Iterable[str]) -> List[str]:
-        with tracer.start_as_current_span(f'ops.pebble.Client.{action}_checks') as span:
+        with tracer.start_as_current_span(f'pebble {action}_checks') as span:
             if isinstance(checks, str) or not hasattr(checks, '__iter__'):
                 raise TypeError(
                     f'checks must be of type Iterable[str], not {type(checks).__name__}',
@@ -2409,7 +2409,7 @@ class Client:
         exists, the two layers are combined into a single one considering the
         layer override rules; if the layer doesn't exist, it is added as usual.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.add_layer') as span:
+        with tracer.start_as_current_span('pebble add_layer') as span:
             if not isinstance(label, str):
                 raise TypeError(f'label must be a str, not {type(label).__name__}')
             span.set_attribute('label', label)
@@ -2437,7 +2437,7 @@ class Client:
 
     def get_plan(self) -> Plan:
         """Get the Pebble plan (contains combined layer configuration)."""
-        with tracer.start_as_current_span('ops.pebble.Client.get_plan'):
+        with tracer.start_as_current_span('pebble get_plan'):
             resp = self._request('GET', '/v1/plan', {'format': 'yaml'})
             return Plan(resp['result'])
 
@@ -2447,7 +2447,7 @@ class Client:
         If names is specified, only fetch the service status for the services
         named.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.get_services') as span:
+        with tracer.start_as_current_span('pebble get_services') as span:
             query = None
             if names is not None:
                 names = list(names)
@@ -2479,7 +2479,7 @@ class Client:
             PathError: If there was an error reading the file at path, for
                 example, if the file doesn't exist or is a directory.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.pull') as span:
+        with tracer.start_as_current_span('pebble pull') as span:
             query = {
                 'action': 'read',
                 'path': path,
@@ -2567,7 +2567,7 @@ class Client:
             PathError: If there was an error writing the file to the path; for example, if the
                 destination path doesn't exist and ``make_dirs`` is not used.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.push') as span:
+        with tracer.start_as_current_span('pebble push') as span:
             info = self._make_auth_dict(permissions, user_id, user, group_id, group)
             info['path'] = path
             if make_dirs:
@@ -2682,7 +2682,7 @@ class Client:
             PathError: if there was an error listing the directory; for example, if the directory
                 does not exist.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.list_files') as span:
+        with tracer.start_as_current_span('pebble list_files') as span:
             query = {'path': path}
             if pattern:
                 query['pattern'] = pattern
@@ -2723,7 +2723,7 @@ class Client:
             PathError: if there was an error making the directory; for example, if the parent path
                 does not exist, and ``make_parents`` is not used.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.make_dir') as span:
+        with tracer.start_as_current_span('pebble make_dir') as span:
             info = self._make_auth_dict(permissions, user_id, user, group_id, group)
             info['path'] = path
             if make_parents:
@@ -2750,7 +2750,7 @@ class Client:
             pebble.PathError: If a relative path is provided, or if `recursive` is False
                 and the file or directory cannot be removed (it does not exist or is not empty).
         """
-        with tracer.start_as_current_span('ops.pebble.Client.remove_path') as span:
+        with tracer.start_as_current_span('pebble remove_path') as span:
             info: Dict[str, Any] = {'path': path}
             if recursive:
                 info['recursive'] = True
@@ -2946,7 +2946,7 @@ class Client:
                 found.
             ExecError: if the command exits with a non-zero exit code.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.exec') as span:
+        with tracer.start_as_current_span('pebble exec') as span:
             if not isinstance(command, list) or not all(isinstance(s, str) for s in command):
                 raise TypeError(f'command must be a list of str, not {type(command).__name__}')
             if len(command) < 1:
@@ -3101,7 +3101,7 @@ class Client:
             APIError: If any of the services are not in the plan or are not
                 currently running.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.send_signal') as span:
+        with tracer.start_as_current_span('pebble send_signal') as span:
             if isinstance(services, (str, bytes)) or not hasattr(services, '__iter__'):
                 raise TypeError(
                     f'services must be of type Iterable[str], not {type(services).__name__}'
@@ -3135,7 +3135,7 @@ class Client:
         Returns:
             List of :class:`CheckInfo` objects.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.get_checks') as span:
+        with tracer.start_as_current_span('pebble get_checks') as span:
             query: Dict[str, Any] = {}
             if level is not None:
                 query['level'] = level.value
@@ -3193,7 +3193,7 @@ class Client:
         Returns:
             The notice's ID.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.notify'):
+        with tracer.start_as_current_span('pebble notify'):
             body: Dict[str, Any] = {
                 'action': 'add',
                 'type': type.value,
@@ -3212,7 +3212,7 @@ class Client:
         Raises:
             APIError: if a notice with the given ID is not found (``code`` 404)
         """
-        with tracer.start_as_current_span('ops.pebble.Client.get_notice'):
+        with tracer.start_as_current_span('pebble get_notice'):
             resp = self._request('GET', f'/v1/notices/{id}')
             return Notice.from_dict(resp['result'])
 
@@ -3247,7 +3247,7 @@ class Client:
             types: Filter for notices with any of the specified types.
             keys: Filter for notices with any of the specified keys.
         """
-        with tracer.start_as_current_span('ops.pebble.Client.get_notices'):
+        with tracer.start_as_current_span('pebble get_notices'):
             query: Dict[str, Union[str, List[str]]] = {}
             if users is not None:
                 query['users'] = users.value

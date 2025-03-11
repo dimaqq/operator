@@ -1412,6 +1412,7 @@ class CharmBase(Object):
             ca: The PEM formatted CA list.
                 Only in use if the URL is an HTTPS URL.
         """
+        # FIXME add argument validation equivalent to Tracing().xxx
         _tracing.set_tracing_destination(_tracing._Config(url, ca))
 
 

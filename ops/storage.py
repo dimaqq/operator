@@ -46,7 +46,7 @@ def _run(args: List[str], **kw: Any):
     cmd: Optional[str] = shutil.which(args[0])
     if cmd is None:
         raise FileNotFoundError(args[0])
-    with tracer.start_as_current_span(f'subprocess.run({cmd})') as span:
+    with tracer.start_as_current_span(args[0]) as span:
         span.set_attribute('argv', args)
         return subprocess.run([cmd, *args[1:]], encoding='utf-8', **kw)
 
