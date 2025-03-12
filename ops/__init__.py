@@ -190,6 +190,7 @@ from typing import Optional, Type
 try:
     # FIXME: can't figure out how to ignore errors here correctly
     from ops_tracing import Tracing  # type: ignore[reportUnknownVariableType]  # noqa: F401
+
     __all__.append('Tracing')
 except ImportError:
     pass
