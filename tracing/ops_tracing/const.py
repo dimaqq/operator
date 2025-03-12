@@ -16,8 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-# NOTE: nominally int, although float would work just as well in practice
-EXPORTER_TIMEOUT: int = 1  # seconds
+EXPORT_TIMEOUT: int | float = 1  # seconds
 """How much to give OTLP span exporter has to push traces to the backend."""
 
 SENDOUT_FACTOR: int = 2
@@ -28,7 +27,7 @@ BUFFER_FILE: str = '.tracing-data.db'
 
 
 @dataclass
-class _Config:
+class Config:
     """Tracing destination configuration.
 
     NOTE: that empty string values may be coerced to None.
@@ -38,6 +37,3 @@ class _Config:
     """The URL to send tracing data to."""
     ca: str | None
     """CA list, a PEM bundle."""
-
-
-__all__ = ['_Config']

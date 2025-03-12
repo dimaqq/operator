@@ -21,21 +21,15 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Generator, Sequence
+from typing import Sequence
 
-import otlp_json
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
-from opentelemetry.trace import get_current_span, get_tracer_provider, set_tracer_provider
-
-import ops
-import ops._tracing.buffer
 import ops.log
-from ops.jujucontext import _JujuContext
+from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
 from .buffer import Buffer
-from .const import EXPORTER_TIMEOUT, SENDOUT_FACTOR
+from .const import EXPORT_TIMEOUT, SENDOUT_FACTOR
+from .vendor import otlp_json
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +39,9 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 
 
+class BufferingSpanExporter(SpanExporter):
+    """Buffers and sends out tracing data."""
 
-class ProxySpanExporter(SpanExporter):
     cache: dict[str | None, ssl.SSLContext]
 
     def __init__(self, buffer_path: Path | str):
@@ -93,6 +88,7 @@ class ProxySpanExporter(SpanExporter):
             raise
 
     def ssl_context(self, ca: str | None) -> ssl.SSLContext:
+        """Create an SSL context with our CA list and settings."""
         if context := self.cache.get(ca):
             return context
         context = self._ssl_context(ca)
@@ -137,6 +133,7 @@ class ProxySpanExporter(SpanExporter):
                     method='POST',
                 ),
                 context=context,
+                timeout=EXPORT_TIMEOUT,
             ):
                 pass
         except urllib.error.HTTPError as e:
@@ -165,6 +162,7 @@ class ProxySpanExporter(SpanExporter):
 
 @contextlib.contextmanager
 def suppress_juju_log_handler():
+    """Disable the Juju log handler."""
     handlers = [h for h in logging.root.handlers if isinstance(h, ops.log.JujuLogHandler)]
     if not handlers:
         yield

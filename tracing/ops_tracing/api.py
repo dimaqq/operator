@@ -20,13 +20,13 @@ from dataclasses import asdict
 import ops
 from ops.charm import RelationRole
 
-from .const import _Config
+from .const import Config
 from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer import (
     CertificateTransferRequires,
 )
 from .vendor.charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 
-# FIXME: shall we re-code databags in pure Python?
+# Databag operations can be trivially re-coded in pure Python:
 # - we'd get rid of pydantic dependency
 # - we'd avoid init-time relation listing and databag update (tracing)
 # - it's trivial to read the relation data bags, see below.
@@ -178,27 +178,27 @@ class Tracing(ops.Object):
     def _reconcile(self, _event: ops.EventBase):
         self.charm.set_tracing_destination(**asdict(self._get_config()))
 
-    def _get_config(self) -> _Config:
+    def _get_config(self) -> Config:
         if not self._tracing.is_ready():
-            return _Config(None, None)
+            return Config(None, None)
 
         url = self._tracing.get_endpoint('otlp_http')
 
         if not url or not url.startswith(('http://', 'https://')):
-            return _Config(None, None)
+            return Config(None, None)
 
         if url.startswith('http://'):
-            return _Config(url, None)
+            return Config(url, None)
 
         if not self._certificate_transfer:
-            return _Config(url, self.ca_data)
+            return Config(url, self.ca_data)
 
         ca_rel = self.model.get_relation(self.ca_relation_name) if self.ca_relation_name else None
         ca_rel_id = ca_rel.id if ca_rel else None
 
         if ca_rel and self._certificate_transfer.is_ready(ca_rel):
-            return _Config(
+            return Config(
                 url, '\n'.join(sorted(self._certificate_transfer.get_all_certificates(ca_rel_id)))
             )
         else:
-            return _Config(None, None)
+            return Config(None, None)

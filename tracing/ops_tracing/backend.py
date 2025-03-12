@@ -16,32 +16,19 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import s
-import threading
-import time
-import urllib.error
-import urllib.request
-from pathlib import Path
-from typing import Generator, Sequence
+from typing import Generator
 
-
-
-import otlp_json
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import get_current_span, get_tracer_provider, set_tracer_provider
-
-
-import ops
-import ops._tracing.buffer
-import ops.log
-from ops._tracing.fixme import _Config
 from ops.jujucontext import _JujuContext
 
-from .export import ProxySpanExporter
+from .const import Config, BUFFER_FILE
+from .export import BufferingSpanExporter
 
-_exporter: ProxySpanExporter | None = None
+_exporter: BufferingSpanExporter | None = None
+
 
 class LogsToEvents(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
@@ -57,6 +44,7 @@ class LogsToEvents(logging.Handler):
                 message = f'log {record=} error {e}'
                 level = 'UNKNOWN'
             span.add_event(message, {'level': level})
+
 
 @contextlib.contextmanager
 def setup_tracing(
@@ -79,7 +67,7 @@ def setup_tracing(
         }
     )
     provider = TracerProvider(resource=resource)
-    _exporter = ProxySpanExporter(juju_context.charm_dir / BUFFER_FILE)
+    _exporter = BufferingSpanExporter(juju_context.charm_dir / BUFFER_FILE)
     span_processor = BatchSpanProcessor(_exporter)
     provider.add_span_processor(span_processor)
     set_tracer_provider(provider)
@@ -107,7 +95,7 @@ def set_tracing_destination(url: str | None, ca: str | None) -> None:
     if url and not url.startswith(('http://', 'https://')):
         raise ValueError('Only HTTP and HTTPS tracing destinations are supported.')
 
-    config = _Config(url, ca)
+    config = Config(url, ca)
 
     if not _exporter:
         return

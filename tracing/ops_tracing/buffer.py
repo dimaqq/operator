@@ -1,4 +1,3 @@
-
 # Copyright 2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -23,7 +22,7 @@ from typing import Callable
 
 from typing_extensions import ParamSpec, TypeVar
 
-from .const import _Config
+from .const import Config
 
 # Approximate safety limit for the database file size
 BUFFER_SIZE = 40 * 1024 * 1024
@@ -146,13 +145,13 @@ class Buffer:
                 conn.execute('COMMIT')
 
     @retry
-    def get_destination(self) -> _Config:
+    def get_destination(self) -> Config:
         with self.tx(readonly=True) as conn:
             settings = {k: v for k, v in conn.execute("""SELECT key, value FROM settings""")}
-            return _Config(settings.get('url') or None, settings.get('ca') or None)
+            return Config(settings.get('url') or None, settings.get('ca') or None)
 
     @retry
-    def set_destination(self, config: _Config) -> None:
+    def set_destination(self, config: Config) -> None:
         with self.tx() as conn:
             conn.execute(
                 """REPLACE INTO settings(key, value) VALUES('url', ?)""", (config.url or '',)
