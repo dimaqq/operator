@@ -31,7 +31,7 @@ tracer = opentelemetry.trace.get_tracer('ops', ops.version.version)
 
 
 try:
-    from .export import (
+    from ops_tracing import (
         mark_observed,
         set_tracing_destination,
         setup_tracing,

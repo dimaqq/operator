@@ -11,16 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""FIXME docstring."""
+"""The tracing API for the charms."""
 
 from __future__ import annotations
 
 from dataclasses import asdict
 
 import ops
-from ops._tracing.fixme import _Config
 from ops.charm import RelationRole
 
+from .const import _Config
 from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer import (
     CertificateTransferRequires,
 )

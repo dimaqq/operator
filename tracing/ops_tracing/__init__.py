@@ -20,4 +20,5 @@ __all__ = [
     'mark_observed',
     'set_tracing_destination',
     'setup_tracing',
+    'Tracing',
 ]

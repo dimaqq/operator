@@ -187,6 +187,12 @@ __all__ = [  # noqa: RUF022 `__all__` is not sorted
 # isort:skip_file
 from typing import Optional, Type
 
+try:
+    from ops_tracing import Tracing  # type: ignore[reportPrivateImportUsage]
+    __all__.append('Tracing')
+except ImportError:
+    pass
+
 from . import _aaa_venv_workaround as _aaa_venv_workaround
 
 # Import pebble explicitly. It's the one module we don't import names from below.

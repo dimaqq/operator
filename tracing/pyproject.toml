@@ -31,7 +31,6 @@ classifiers = [
 ]
 dependencies = [
     "otlp-json>=0.9.7",
-    "opentelemetry-instrumentation-urllib~=0.51b0",  # FIXME: decide if this helps pebble traces
     "opentelemetry-sdk~=1.30",
     "pydantic",
 ]
