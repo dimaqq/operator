@@ -12,3 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The tracing facility of the Operator Framework."""
+
+from .api import Tracing
+from .backend import mark_observed, set_tracing_destination, setup_tracing
+
+__all__ = [
+    'mark_observed',
+    'set_tracing_destination',
+    'setup_tracing',
+]
