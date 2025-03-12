@@ -46,7 +46,7 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
           verbose: true
-      - run: rm -f dist/*.attestation  # should I parametrise release instead?
+      - run: rm -f tracing/dist/*.attestation  # should I parametrise release instead?
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ./tracing/dist/
