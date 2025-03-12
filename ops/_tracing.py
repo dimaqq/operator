@@ -24,10 +24,10 @@ from typing import Generator
 
 import opentelemetry.trace
 
-import ops.version
-from ops.jujucontext import _JujuContext
+from .jujucontext import _JujuContext
+from .version import version
 
-tracer = opentelemetry.trace.get_tracer('ops', ops.version.version)
+tracer = opentelemetry.trace.get_tracer('ops', version)
 
 
 try:
