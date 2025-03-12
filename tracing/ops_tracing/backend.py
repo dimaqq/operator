@@ -13,7 +13,6 @@
 
 from __future__ import annotations
 
-
 import contextlib
 import logging
 from typing import Generator
@@ -22,9 +21,10 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import get_current_span, get_tracer_provider, set_tracer_provider
+
 from ops.jujucontext import _JujuContext
 
-from .const import Config, BUFFER_FILE
+from .const import BUFFER_FILE, Config
 from .export import BufferingSpanExporter
 
 _exporter: BufferingSpanExporter | None = None
@@ -32,6 +32,7 @@ _exporter: BufferingSpanExporter | None = None
 
 class LogsToEvents(logging.Handler):
     """An adaptor that convert log records to OTEL events."""
+
     def emit(self, record: logging.LogRecord) -> None:
         """Emit this log record as OTEL event."""
         span = get_current_span()

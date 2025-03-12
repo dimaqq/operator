@@ -57,6 +57,7 @@ R = TypeVar('R')
 
 def retry(f: Callable[P, R]) -> Callable[P, R]:
     """Simple retry decorator."""
+
     @functools.wraps(f)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         exc: sqlite3.Error | None = None

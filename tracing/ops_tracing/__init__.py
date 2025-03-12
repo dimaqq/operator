@@ -17,8 +17,8 @@ from .api import Tracing
 from .backend import mark_observed, set_tracing_destination, setup_tracing
 
 __all__ = [
+    'Tracing',
     'mark_observed',
     'set_tracing_destination',
     'setup_tracing',
-    'Tracing',
 ]

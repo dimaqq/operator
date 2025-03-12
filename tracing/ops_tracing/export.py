@@ -23,9 +23,10 @@ import urllib.request
 from pathlib import Path
 from typing import Sequence
 
-import ops.log
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
+
+import ops.log
 
 from .buffer import Buffer
 from .const import EXPORT_TIMEOUT, SENDOUT_FACTOR
