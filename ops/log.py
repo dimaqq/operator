@@ -26,31 +26,15 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .model import _ModelBackend
 
-_DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
-
 
 class JujuLogHandler(logging.Handler):
     """A handler for sending logs and warnings to Juju via juju-log."""
 
     drop: contextvars.ContextVar[bool]
     """When set to True, drop any record we're asked to emit, because:
-    - either we're already logging here and the record is recursive,
-    - or we're exporting tracing data and the record stems from that.
 
-    # FIXME suggest a better name for this attribute
-    #
-    # Typical code path:
-    # logging -> this logger -> juju-log hook tool -> error ->
-    # logging [recursion]
-    #
-    # or
-    #
-    # helper thread -> export -> real export -> requests -> urllib3 -> log.debug(...)
-    #
-    # and additionally
-    # shutdown_tracing -> ... -> start_as_new_span -> if shutdown: logger.warning(...)
-    #
-    # FIXME: decision to be made if we want to capture export errors
+    - either we're already logging here and this record is recursive,
+    - or we're exporting tracing data and this record stems from that.
     """
 
     def __init__(self, model_backend: _ModelBackend, level: int = logging.DEBUG):
@@ -95,10 +79,6 @@ def setup_root_logging(
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     logger.addHandler(JujuLogHandler(model_backend))
-    # FIXME temporary for debug, don't merge
-    # NOTE: figure out why I sometimes need this and other times I don't
-    # logger.addHandler(logging.StreamHandler(stream=sys.stderr))
-    # logger.handlers[-1].setLevel(logging.NOTSET)
 
     def custom_showwarning(
         message: typing.Union[Warning, str],
@@ -115,7 +95,7 @@ def setup_root_logging(
 
     if debug:
         handler = logging.StreamHandler()
-        formatter = logging.Formatter(_DEBUG_FORMAT)
+        formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 

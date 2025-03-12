@@ -66,7 +66,7 @@ class LogsToEvents(logging.Handler):
                 # This should never happen, except if the charm includes custom logging
                 # library like structlog that enriches both the format and record attributes,
                 # or if the record format doesn't match the arguments.
-                message = f'log record error {e}'
+                message = f'log {record=} error {e}'
                 level = 'UNKNOWN'
             span.add_event(message, {'level': level})
 
