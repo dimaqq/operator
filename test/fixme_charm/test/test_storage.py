@@ -19,7 +19,7 @@ import pytest
 
 import ops._tracing
 import ops.testing
-from ops._tracing import _Config
+from ops._tracing.fixme import _Config
 
 _pydantic = pytest.importorskip('pydantic')
 _export = pytest.importorskip('ops._tracing.export')
