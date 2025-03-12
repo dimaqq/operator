@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import asdict
 
 import ops
-from ops._tracing import _Config
+from ops._tracing.fixme import _Config
 from ops.charm import RelationRole
 
 from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer import (
