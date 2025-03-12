@@ -24,7 +24,6 @@ from pathlib import Path
 from typing import Generator, Sequence
 
 import otlp_json
-from opentelemetry.instrumentation.urllib import URLLibInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
@@ -33,11 +32,8 @@ from opentelemetry.trace import get_current_span, get_tracer_provider, set_trace
 import ops
 import ops._tracing.buffer
 import ops.log
-from ops._tracing import _Config
+from ops._tracing.fixme import _Config
 from ops.jujucontext import _JujuContext
-
-# Trace `urllib` usage when talking to Pebble
-URLLibInstrumentor().instrument()
 
 # NOTE: nominally int, although float would work just as well in practice
 EXPORTER_TIMEOUT: int = 1  # seconds
@@ -70,8 +66,8 @@ class LogsToEvents(logging.Handler):
                 # This should never happen, except if the charm includes custom logging
                 # library like structlog that enriches both the format and record attributes,
                 # or if the record format doesn't match the arguments.
-                message = f"log record error {e}"
-                level = "UNKNOWN"
+                message = f'log record error {e}'
+                level = 'UNKNOWN'
             span.add_event(message, {'level': level})
 
 
@@ -154,10 +150,6 @@ class ProxySpanExporter(SpanExporter):
         if not config.url:
             return
 
-        # FIXME cache
-
-        # FIXME: is this custom code worth it?
-        # or would it be easier and safer to use `requests`?
         assert config.url.startswith(('http://', 'https://'))
         context = self.ssl_context(config.ca) if config.url.startswith('https://') else None
 
@@ -250,14 +242,18 @@ def setup_tracing(
     # get_tracer_provider()._resource = resource
 
 
-def set_tracing_destination(config: _Config) -> None:
+def set_tracing_destination(url: str | None, ca: str | None) -> None:
     """Configure the destination service for tracing data.
 
     Args:
-        config: destination configuration with two fields: ``.url``, the URL of the
-            telemetry service to send tracing data to and ``.ca``, the CA list (PEM
-            bundle, a multi-line string) if the URL is an HTTPS URL.
+        url: the URL of the telemetry service to send tracing data to
+        ca: the CA list (PEM bundle, a multi-line string) if the URL is an HTTPS URL.
     """
+    if url and not url.startswith(('http://', 'https://')):
+        raise ValueError('Only HTTP and HTTPS tracing destinations are supported.')
+
+    config = _Config(url, ca)
+
     if not _exporter:
         return
 

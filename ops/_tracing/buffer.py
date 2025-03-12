@@ -23,7 +23,7 @@ from typing import Callable
 from typing_extensions import ParamSpec, TypeVar
 from typing_extensions import reveal_type as reveal_type  # FIXME
 
-from ops._tracing import _Config
+from ops._tracing.fixme import _Config
 
 # Approximate safety limit for the database file size
 BUFFER_SIZE = 40 * 1024 * 1024

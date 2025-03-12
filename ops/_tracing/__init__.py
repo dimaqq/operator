@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import warnings
 from contextlib import contextmanager
-from dataclasses import dataclass
 from typing import Generator
 
 import opentelemetry.trace
@@ -29,19 +28,6 @@ import ops.version
 from ops.jujucontext import _JujuContext
 
 tracer = opentelemetry.trace.get_tracer('ops', ops.version.version)
-
-
-@dataclass
-class _Config:
-    """Tracing destination configuration.
-
-    NOTE: that empty string values may be coerced to None.
-    """
-
-    url: str | None
-    """The URL to send tracing data to."""
-    ca: str | None
-    """CA list, a PEM bundle."""
 
 
 try:
@@ -54,13 +40,15 @@ except ImportError:
 
     def mark_observed() -> None: ...
 
-    def set_tracing_destination(config: _Config) -> None:
+    def set_tracing_destination(url: str | None, ca: str | None) -> None:
         warnings.warn(
             'Tracing is not enabled, but set_tracing_destination() was called. '
-            "Ensure 'ops[tracing]' is installed.",
+            "Ensure that 'ops[tracing]' is installed.",
             UserWarning,
             stacklevel=3,
         )
+        if url and not url.startswith(('http://', 'https://')):
+            raise ValueError('Only HTTP and HTTPS tracing destinations are supported.')
 
     @contextmanager
     def setup_tracing(
@@ -70,7 +58,6 @@ except ImportError:
 
 
 __all__ = [
-    '_Config',
     'mark_observed',
     'set_tracing_destination',
     'setup_tracing',
