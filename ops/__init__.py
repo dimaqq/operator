@@ -188,7 +188,9 @@ __all__ = [  # noqa: RUF022 `__all__` is not sorted
 from typing import Optional, Type
 
 try:
-    from ops_tracing import Tracing  # type: ignore[reportPrivateImportUsage]
+    # FIXME: can't figure out how to ignore errors here correctly
+    from ops_tracing import Tracing  # type: ignore[reportUnknownVariableType]  # noqa: F401
+    # FIXME: this makes ruff complain that __all__ is not sorted...
     __all__.append('Tracing')
 except ImportError:
     pass

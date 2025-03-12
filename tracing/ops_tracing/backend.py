@@ -31,7 +31,9 @@ _exporter: BufferingSpanExporter | None = None
 
 
 class LogsToEvents(logging.Handler):
+    """An adaptor that convert log records to OTEL events."""
     def emit(self, record: logging.LogRecord) -> None:
+        """Emit this log record as OTEL event."""
         span = get_current_span()
         if span and span.is_recording():
             try:
@@ -50,6 +52,7 @@ class LogsToEvents(logging.Handler):
 def setup_tracing(
     juju_context: _JujuContext, charm_class_name: str
 ) -> Generator[None, None, None]:
+    """A context manager to control tracing lifespan."""
     global _exporter
     # FIXME is it ever possible for unit_name to be unset (empty)?
     app_name, unit_number = juju_context.unit_name.split('/', 1)
@@ -106,6 +109,7 @@ def set_tracing_destination(url: str | None, ca: str | None) -> None:
 
 
 def mark_observed() -> None:
+    """Mark the tracing data collected in this dispatch as higher priority."""
     if not _exporter:
         return
     _exporter.buffer.mark_observed()

@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 EXPORT_TIMEOUT: int | float = 1  # seconds
 """How much to give OTLP span exporter has to push traces to the backend."""
 

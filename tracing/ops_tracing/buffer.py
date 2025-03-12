@@ -56,6 +56,7 @@ R = TypeVar('R')
 
 
 def retry(f: Callable[P, R]) -> Callable[P, R]:
+    """Simple retry decorator."""
     @functools.wraps(f)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         exc: sqlite3.Error | None = None
@@ -146,12 +147,14 @@ class Buffer:
 
     @retry
     def get_destination(self) -> Config:
+        """Get the tracing destination from the database."""
         with self.tx(readonly=True) as conn:
             settings = {k: v for k, v in conn.execute("""SELECT key, value FROM settings""")}
             return Config(settings.get('url') or None, settings.get('ca') or None)
 
     @retry
     def set_destination(self, config: Config) -> None:
+        """Update the tracing destination in the database."""
         with self.tx() as conn:
             conn.execute(
                 """REPLACE INTO settings(key, value) VALUES('url', ?)""", (config.url or '',)
@@ -165,6 +168,7 @@ class Buffer:
     # Perhaps we should track juju events and not lifecycle events?
     @retry
     def mark_observed(self):
+        """Mark the tracing data collected in this dispatch as higher priority."""
         if self.observed:
             return
 
@@ -267,6 +271,7 @@ class Buffer:
 
     @retry
     def remove(self, id_: int) -> None:
+        """Remove a tracing record by id."""
         with self.tx() as conn:
             # NOTE: the RETURNING clause would be ideal here, but it can't be used.
             # Sqlite shipped with Python 3.8 is too old.
