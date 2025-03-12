@@ -1005,8 +1005,8 @@ class Framework(Object):
                         # ops.charm.Events are re-exported through ops
                         event_module = 'ops'
                     event_class = f'{event_module}.{event.__class__.__qualname__}'
-                    invocation = f'{event_handle.kind}: {observer_path}.{method_name}'
-                    with tracer.start_as_current_span(invocation) as span:
+                    short_name = observer_path.split("/")[-1].split("[")[0]
+                    with tracer.start_as_current_span(f'{event_handle.kind}: {short_name}') as span:
                         span.set_attribute('deferred', single_event_path is None)
                         span.set_attribute('synthetic', synthetic)
                         span.set_attribute('event', repr(event))
