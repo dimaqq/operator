@@ -175,7 +175,7 @@ class Tracing(ops.Object):
                 self.framework.observe(event, self._reconcile)
 
     def _reconcile(self, _event: ops.EventBase):
-        self.charm.set_tracing_destination(**asdict(self._get_config()))
+        ops.tracing.set_destination(**asdict(self._get_config()))
 
     def _get_config(self) -> Config:
         if not self._tracing.is_ready():
