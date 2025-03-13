@@ -868,7 +868,6 @@ class _GenericLazyMapping(Mapping[str, _LazyValueType], ABC):
     _lazy_data: Optional[Dict[str, _LazyValueType]] = None
 
     @abstractmethod
-    # FIXME instrument here, or individual access?
     def _load(self) -> Dict[str, _LazyValueType]:
         raise NotImplementedError()
 
@@ -1004,7 +1003,6 @@ class BindingMapping(Mapping[str, 'Binding']):
         self._backend = backend
         self._data: _BindingDictType = {}
 
-    # FIXME check
     def get(self, binding_key: Union[str, 'Relation']) -> 'Binding':
         """Get a specific Binding for an endpoint/relation.
 
@@ -1053,7 +1051,6 @@ class Binding:
         return Network(self._backend.network_get(name, relation_id))
 
     @property
-    # FIXME check
     def network(self) -> 'Network':
         """The network information for this binding."""
         if self._network is None:
@@ -1768,7 +1765,6 @@ class RelationData(Mapping[Union['Unit', 'Application'], 'RelationDataContent'])
     :attr:`Relation.data`
     """
 
-    # FIXME check
     def __init__(self, relation: Relation, our_unit: Unit, backend: '_ModelBackend'):
         self.relation = weakref.proxy(relation)
         self._data: Dict[Union[Unit, Application], RelationDataContent] = {
@@ -2286,8 +2282,6 @@ class Storage:
         the actual details are gone from Juju by the time of a dynamic lookup.
         """
         self._location = Path(location)
-
-    # FIXME add __repr__
 
 
 class MultiPushPullError(Exception):
@@ -3112,8 +3106,6 @@ class Container:
     def pebble(self) -> pebble.Client:
         """The low-level :class:`ops.pebble.Client` instance for this container."""
         return self._pebble
-
-    # FIXME add __repr__
 
 
 class ContainerMapping(Mapping[str, Container]):

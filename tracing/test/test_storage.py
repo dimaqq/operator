@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""FIXME docstring."""
 
 from __future__ import annotations
+
+from typing import Type
 
 import pytest
 from ops_tracing.const import Config
@@ -23,17 +24,17 @@ import ops.testing
 
 _pydantic = pytest.importorskip('pydantic')
 _export = pytest.importorskip('ops._tracing.export')
-from test.fixme_charm.src.charm import Charm  # noqa: E402
 
 
 @pytest.mark.parametrize('relation_to_poke', [0, 1])
 def test_https_tracing_destination(
+    sample_charm: Type[ops.CharmBase],
     setup_tracing: None,
     https_relation: ops.testing.Relation,
     ca_relation: ops.testing.Relation,
     relation_to_poke: int,
 ):
-    ctx = ops.testing.Context(Charm)
+    ctx = ops.testing.Context(sample_charm)
     state = ops.testing.State(relations={https_relation, ca_relation})
     ctx.run(ctx.on.relation_changed([https_relation, ca_relation][relation_to_poke]), state)
 
