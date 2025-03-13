@@ -36,7 +36,7 @@ from typing import (
     cast,
 )
 
-from . import _tracing, model
+from . import model
 from ._private import yaml
 from .framework import (
     EventBase,
@@ -1403,16 +1403,6 @@ class CharmBase(Object):
     def config(self) -> model.ConfigData:
         """A mapping containing the charm's config and current values."""
         return self.model.config
-
-    def set_tracing_destination(self, url: Optional[str], ca: Optional[str]) -> None:
-        """Configure the destination service for tracing data.
-
-        Args:
-            url: The URL of the telemetry service to send tracing data to.
-            ca: The PEM formatted CA list.
-                Only in use if the URL is an HTTPS URL.
-        """
-        _tracing.set_tracing_destination(url, ca)
 
 
 def _evaluate_status(charm: CharmBase):  # pyright: ignore[reportUnusedFunction]

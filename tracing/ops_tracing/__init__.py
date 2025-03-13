@@ -11,14 +11,46 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""The tracing facility of the Operator Framework."""
+"""The tracing facility for the Ops framework.
+
+FIXME: more docs here, incl examples.
+
+Declare the charm tracing interface and optionally the TLS interface in your
+``charmcraft.yaml``. If you're migrating from the ``charm-tracing`` charm lib,
+you most likely already have these::
+
+    requires:
+        charm-tracing:
+            interface: tracing
+            limit: 1
+            optional: true
+        send-ca-cert:
+            interface: certificate_transfer
+            limit: 1
+            optional: true
+
+
+Caveat: presently pulls in ``pydantic``, which means that Rust build packages
+must be specified in your ``charmcraft.yaml``. If you're migrating from the
+``charm-tracing`` charm lib, you most likely already have these::
+
+    parts:
+        charm:
+            plugin: charm
+            source: .
+            build-packages:
+                - rustc
+                - cargo
+
+...
+"""
 
 from .api import Tracing
-from .backend import mark_observed, set_tracing_destination, setup_tracing
+from .backend import mark_observed, set_destination, setup
 
 __all__ = [
     'Tracing',
     'mark_observed',
-    'set_tracing_destination',
-    'setup_tracing',
+    'set_destination',
+    'setup',
 ]

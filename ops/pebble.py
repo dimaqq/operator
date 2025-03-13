@@ -82,7 +82,7 @@ from typing import (
 import websocket
 
 from ._private import timeconv, yaml
-from ._tracing import tracer
+from .version import tracer
 
 # Public as these are used in the Container.add_layer signature
 ServiceDict = typing.TypedDict(

@@ -55,6 +55,7 @@ This API provides core features to your charm, including:
 __all__ = [  # noqa: RUF022 `__all__` is not sorted
     '__version__',
     'main',
+    'tracing',
     'pebble',
     # From charm.py
     'ActionEvent',
@@ -187,14 +188,7 @@ __all__ = [  # noqa: RUF022 `__all__` is not sorted
 # isort:skip_file
 from typing import Optional, Type
 
-try:
-    # FIXME: can't figure out how to ignore errors here correctly
-    from ops_tracing import Tracing  # type: ignore[reportUnknownVariableType]  # noqa: F401
-
-    __all__.append('Tracing')
-except ImportError:
-    pass
-
+# FIXME: need to decide on this at a stand-up
 from . import _aaa_venv_workaround as _aaa_venv_workaround
 
 # Import pebble explicitly. It's the one module we don't import names from below.
@@ -342,6 +336,11 @@ from .model import (
 
 # NOTE: don't import testing or Harness here, as that's a test-time concern
 # rather than a runtime concern.
+
+try:
+    import ops_tracing as tracing
+except ImportError:
+    tracing = None
 
 from .version import version as __version__
 

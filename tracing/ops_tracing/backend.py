@@ -50,7 +50,7 @@ class LogsToEvents(logging.Handler):
 
 
 @contextlib.contextmanager
-def setup_tracing(
+def setup(
     juju_context: _JujuContext, charm_class_name: str
 ) -> Generator[None, None, None]:
     """A context manager to control tracing lifespan."""
@@ -89,12 +89,12 @@ def setup_tracing(
     # get_tracer_provider()._resource = resource
 
 
-def set_tracing_destination(url: str | None, ca: str | None) -> None:
+def set_destination(url: str | None, ca: str | None) -> None:
     """Configure the destination service for tracing data.
 
     Args:
         url: the URL of the telemetry service to send tracing data to
-        ca: the CA list (PEM bundle, a multi-line string) if the URL is an HTTPS URL.
+        ca: the CA list (PEM bundle, a multi-line string), only used for HTTPS URLs.
     """
     if url and not url.startswith(('http://', 'https://')):
         raise ValueError('Only HTTP and HTTPS tracing destinations are supported.')

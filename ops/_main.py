@@ -20,18 +20,18 @@ import shutil
 import subprocess
 import sys
 import warnings
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
-from . import _tracing
+from . import tracing
 from . import charm as _charm
 from . import framework as _framework
 from . import model as _model
 from . import storage as _storage
-from . import version as _version
-from ._tracing import tracer
 from .jujucontext import _JujuContext
 from .log import setup_root_logging
+from .version import tracer, version
 
 CHARM_STATE_FILE = '.unit-state.db'
 
@@ -424,7 +424,7 @@ class _Manager:
             self._model_backend, debug=self._juju_context.debug, exc_stderr=handling_action
         )
 
-        logger.debug('ops %s up and running.', _version.version)
+        logger.debug('ops %s up and running.', version)
 
     def _make_storage(self, dispatcher: _Dispatcher):
         charm_state_path = self._charm_root / self._charm_state_path
@@ -556,7 +556,8 @@ def main(charm_class: Type[_charm.CharmBase], use_juju_for_storage: Optional[boo
     See `ops.main() <#ops-main-entry-point>`_ for details.
     """
     juju_context = _JujuContext.from_dict(os.environ)
-    with _tracing.setup_tracing(juju_context, charm_class.__name__):
+    tracing_manager = tracing.setup(juju_context, charm_class.__name__) if tracing else nullcontext()
+    with tracing_manager:
         try:
             with tracer.start_as_current_span('ops.main'):
                 manager = _Manager(

@@ -16,5 +16,8 @@
 
 This module is NOT to be used when developing charms using ops.
 """
+import opentelemetry.trace
 
 version: str = '2.20.0.dev0'
+
+tracer = opentelemetry.trace.get_tracer('ops', version)
