@@ -337,12 +337,12 @@ from .model import (
 # NOTE: don't import testing or Harness here, as that's a test-time concern
 # rather than a runtime concern.
 
+from .version import version as __version__
+
 try:
     import ops_tracing as tracing
 except ImportError:
     tracing = None
-
-from .version import version as __version__
 
 
 class _Main:

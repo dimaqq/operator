@@ -16,13 +16,12 @@
 from __future__ import annotations
 
 import ops
-import ops._tracing.api
 
 
 class Charm(ops.CharmBase):
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
-        self._tracing = ops._tracing.api.Tracing(
+        self.tracing = ops.tracing.Tracing(
             self,
             tracing_relation_name='charm-tracing',
             ca_relation_name='send-ca-cert',

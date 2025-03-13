@@ -15,14 +15,15 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import Generator
+from typing import TYPE_CHECKING, Generator
 
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import get_current_span, get_tracer_provider, set_tracer_provider
 
-from ops.jujucontext import _JujuContext
+if TYPE_CHECKING:
+    from ops.jujucontext import _JujuContext
 
 from .const import BUFFER_FILE, Config
 from .export import BufferingSpanExporter
@@ -50,9 +51,7 @@ class LogsToEvents(logging.Handler):
 
 
 @contextlib.contextmanager
-def setup(
-    juju_context: _JujuContext, charm_class_name: str
-) -> Generator[None, None, None]:
+def setup(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
     """A context manager to control tracing lifespan."""
     global _exporter
     # FIXME is it ever possible for unit_name to be unset (empty)?

@@ -19,7 +19,7 @@ from unittest.mock import Mock
 
 import pytest
 
-import ops._tracing
+import ops
 import ops.testing
 
 _pydantic = pytest.importorskip('pydantic')
@@ -38,7 +38,7 @@ def test_charm_runs():
 @pytest.fixture
 def mock_destination(monkeypatch: pytest.MonkeyPatch) -> Mock:
     rv = Mock()
-    monkeypatch.setattr(ops._tracing, 'set_tracing_destination', rv)
+    monkeypatch.setattr(ops.tracing, 'set_destination', rv)
     return rv
 
 

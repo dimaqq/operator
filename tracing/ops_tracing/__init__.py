@@ -42,7 +42,22 @@ must be specified in your ``charmcraft.yaml``. If you're migrating from the
                 - rustc
                 - cargo
 
-...
+
+Then add the Tracing object in your charm::
+
+    import ops
+
+    class Charm(ops.CharmBase):
+        def __init__(self, framework: ops.Framework):
+        super().__init__(framework)
+        ...
+        self.tracing = ops.tracing.Tracing(
+            self,
+            tracing_relation_name='charm-tracing',
+            ca_relation_name='send-ca-cert',
+        )
+
+Note that you don't have to ``import ops.tracing``.
 """
 
 from .api import Tracing

@@ -27,7 +27,7 @@ if '' not in sys.path:
     sys.path.insert(0, '')
 
 
-import ops._tracing
+import ops
 import ops.testing
 from ops.jujucontext import _JujuContext
 
@@ -83,7 +83,7 @@ def juju_context(tmp_path: Path):
 
 @pytest.fixture
 def setup_tracing(monkeypatch: pytest.MonkeyPatch, juju_context: _JujuContext):
-    with ops._tracing.setup_tracing(juju_context, 'charm'):
+    with ops.tracing.setup(juju_context, 'charm'):
         yield
     # TODO: this would be the place to clean up
     # - tracing db content doesn't matter as the db file is located in unique file per test

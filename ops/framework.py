@@ -49,7 +49,7 @@ from typing import (
 
 import opentelemetry.trace
 
-from . import charm, tracing
+from . import charm
 from .model import Model, _ModelBackend
 from .storage import JujuStorage, NoSnapshotError, SQLiteStorage
 from .version import tracer
@@ -993,6 +993,8 @@ class Framework(Object):
                     # The unit agent called us to process e.g. relation-changed
                     # There's also a deferred relation-changed event
                     # The two events are collapsed... which is actually run?
+                    from . import tracing  # break circular import
+
                     if tracing:
                         tracing.mark_observed()
 

@@ -18,7 +18,6 @@ from __future__ import annotations
 from dataclasses import asdict
 
 import ops
-from ops.charm import RelationRole
 
 from .const import Config
 from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer import (
@@ -125,7 +124,7 @@ class Tracing(ops.Object):
         # that way a badly written charm crashes in early testing.
         if not (relation := self.charm.meta.relations.get(tracing_relation_name)):
             raise ValueError(f'{tracing_relation_name=} is not declared in charm metadata')
-        if (relation_role := relation.role) is not RelationRole.requires:
+        if (relation_role := relation.role) is not ops.RelationRole.requires:
             raise ValueError(
                 f"{tracing_relation_name=} {relation_role=} when 'requires' is expected"
             )
@@ -157,7 +156,7 @@ class Tracing(ops.Object):
         if ca_relation_name:
             if not (relation := self.charm.meta.relations.get(ca_relation_name)):
                 raise ValueError(f'{ca_relation_name=} is not declared in charm metadata')
-            if (relation_role := relation.role) is not RelationRole.requires:
+            if (relation_role := relation.role) is not ops.RelationRole.requires:
                 raise ValueError(
                     f"{ca_relation_name=} {relation_role=} when 'requires' is expected"
                 )

@@ -24,7 +24,6 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
-from . import tracing
 from . import charm as _charm
 from . import framework as _framework
 from . import model as _model
@@ -555,8 +554,12 @@ def main(charm_class: Type[_charm.CharmBase], use_juju_for_storage: Optional[boo
 
     See `ops.main() <#ops-main-entry-point>`_ for details.
     """
+    from . import tracing  # break circular import
+
     juju_context = _JujuContext.from_dict(os.environ)
-    tracing_manager = tracing.setup(juju_context, charm_class.__name__) if tracing else nullcontext()
+    tracing_manager = (
+        tracing.setup(juju_context, charm_class.__name__) if tracing else nullcontext()
+    )
     with tracing_manager:
         try:
             with tracer.start_as_current_span('ops.main'):

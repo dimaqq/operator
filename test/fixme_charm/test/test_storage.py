@@ -16,10 +16,10 @@
 from __future__ import annotations
 
 import pytest
+from ops_tracing.const import Config
 
-import ops._tracing
+import ops
 import ops.testing
-from ops._tracing.fixme import _Config
 
 _pydantic = pytest.importorskip('pydantic')
 _export = pytest.importorskip('ops._tracing.export')
@@ -37,8 +37,8 @@ def test_https_tracing_destination(
     state = ops.testing.State(relations={https_relation, ca_relation})
     ctx.run(ctx.on.relation_changed([https_relation, ca_relation][relation_to_poke]), state)
 
-    assert ops._tracing.export._exporter
-    assert ops._tracing.export._exporter.buffer.get_destination() == _Config(
+    assert ops.tracing.backend._exporter
+    assert ops.tracing.backend._exporter.buffer.get_destination() == Config(
         'https://tls.example/v1/traces',
         'FIRST\nSECOND',
     )
