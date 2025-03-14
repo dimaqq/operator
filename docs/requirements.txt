@@ -85,32 +85,21 @@ myst-parser==4.0.1
     # via ops (pyproject.toml)
 opentelemetry-api==1.30.0
     # via
-    #   opentelemetry-instrumentation
-    #   opentelemetry-instrumentation-urllib
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   ops (pyproject.toml)
-opentelemetry-instrumentation==0.51b0
-    # via opentelemetry-instrumentation-urllib
-opentelemetry-instrumentation-urllib==0.51b0
-    # via ops (pyproject.toml)
 opentelemetry-sdk==1.30.0
-    # via ops (pyproject.toml)
+    # via ops-tracing
 opentelemetry-semantic-conventions==0.51b0
-    # via
-    #   opentelemetry-instrumentation
-    #   opentelemetry-instrumentation-urllib
-    #   opentelemetry-sdk
-opentelemetry-util-http==0.51b0
-    # via opentelemetry-instrumentation-urllib
+    # via opentelemetry-sdk
+ops-tracing==0.9.4
+    # via ops (pyproject.toml)
 otlp-json==0.9.7
-    # via ops (pyproject.toml)
+    # via ops-tracing
 packaging==24.2
-    # via
-    #   opentelemetry-instrumentation
-    #   sphinx
+    # via sphinx
 pydantic==2.10.6
-    # via ops (pyproject.toml)
+    # via ops-tracing
 pydantic-core==2.27.2
     # via pydantic
 pygments==2.19.1
@@ -209,9 +198,7 @@ websocket-client==1.8.0
 websockets==15.0.1
     # via sphinx-autobuild
 wrapt==1.17.2
-    # via
-    #   deprecated
-    #   opentelemetry-instrumentation
+    # via deprecated
 zipp==3.21.0
     # via importlib-metadata
 ./testing/
