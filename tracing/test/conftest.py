@@ -23,7 +23,8 @@ import pytest
 if '' not in sys.path:
     # FIXME: figure out if this is needed long term and why.
     # I think it's because some ancestor is not a package.
-    sys.path.insert(0, '')
+    #sys.path.insert(0, '')
+    pass
 
 
 import ops
