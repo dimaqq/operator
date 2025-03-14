@@ -34,7 +34,8 @@ import typing
 import warnings
 import weakref
 from abc import ABC, abstractmethod
-from contextlib import nullcontext
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path, PurePath
 from typing import (
     Any,
@@ -3328,6 +3329,15 @@ class _ModelBackend:
         self._is_leader: Optional[bool] = None
         self._leader_check_time = None
         self._hook_is_running = ''
+        self._is_recursive = ContextVar('_prevent_recursion', default=False)
+
+    @contextmanager
+    def prevent_recursion(self):
+        token = self._is_recursive.set(True)
+        try:
+            yield
+        finally:
+            self._is_recursive.reset(token)
 
     def _run(
         self,
@@ -3336,9 +3346,16 @@ class _ModelBackend:
         use_json: bool = False,
         input_stream: Optional[str] = None,
     ) -> Union[str, Any, None]:
+        if self._is_recursive.get():
+            # Would be nice to do something about this, sys.stderr maybe?
+            return
         # Logs are collected via log integration, omit the subprocess calls that push
-        # the same content to juju.
-        mgr = nullcontext() if args[0] == 'juju-log' else tracer.start_as_current_span(args[0])
+        # the same content to juju from telemetry.
+        mgr = (
+            self.prevent_recursion()
+            if args[0] == 'juju-log'
+            else tracer.start_as_current_span(args[0])
+        )
         with mgr as span:
             kwargs = {
                 'stdout': subprocess.PIPE,

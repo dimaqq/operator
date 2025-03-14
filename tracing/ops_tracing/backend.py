@@ -54,12 +54,9 @@ class LogsToEvents(logging.Handler):
 def setup(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
     """A context manager to control tracing lifespan."""
     global _exporter
-    # FIXME is it ever possible for unit_name to be unset (empty)?
     app_name, unit_number = juju_context.unit_name.split('/', 1)
-    # FIXME we could get charmhub charm name from self.meta.name, but only later
-    # when metadata.yaml file is parsed. I think that Resource is immutable,
-    # so where can we smuggle that bit of info later? An Event perhaps?
-
+    # NOTE: Resource is immutable, and we want to start tracing early.
+    # This means that charmhub charm name (self.meta.name) is not available yet.
     resource = Resource.create(
         attributes={
             'service.namespace': juju_context.model_uuid,
@@ -80,12 +77,6 @@ def setup(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, 
         yield
     finally:
         shutdown_tracing()
-    # FIXME: in testing with tracing, we need a hack.
-    # OpenTelemetry disallows setting the tracer provider twice,
-    # a warning is issued and new provider is ignored.
-    #
-    # For example, we could reset the resource instead:
-    # get_tracer_provider()._resource = resource
 
 
 def set_destination(url: str | None, ca: str | None) -> None:

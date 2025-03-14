@@ -164,9 +164,6 @@ class Buffer:
                 """REPLACE INTO settings(key, value) VALUES('ca', ?)""", (config.ca or '',)
             )
 
-    # FIXME: currently unused
-    # If most charms observe the CollectStatusEvent, then an event is observed on every dispatch.
-    # Perhaps we should track juju events and not lifecycle events?
     @retry
     def mark_observed(self):
         """Mark the tracing data collected in this dispatch as higher priority."""

@@ -17,15 +17,9 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Generator
 
 import pytest
-
-if '' not in sys.path:
-    # FIXME: figure out if this is needed long term and why.
-    # I think it's because some ancestor is not a package.
-    #sys.path.insert(0, '')
-    pass
-
 
 import ops
 import ops.testing
@@ -85,6 +79,11 @@ def juju_context(tmp_path: Path):
 def setup_tracing(monkeypatch: pytest.MonkeyPatch, juju_context: _JujuContext):
     with ops.tracing.setup(juju_context, 'charm'):
         yield
+    # NOTE: # OpenTelemetry disallows setting the tracer provider twice,
+    # a warning is issued and new provider is ignored.
+    # For example, we could reset the resource instead:
+    # get_tracer_provider()._resource = resource
+    #
     # TODO: this would be the place to clean up
     # - tracing db content doesn't matter as the db file is located in unique file per test
     # - forcibly reset the opentelemetry global state
@@ -93,10 +92,10 @@ def setup_tracing(monkeypatch: pytest.MonkeyPatch, juju_context: _JujuContext):
 
 
 @pytest.fixture
-def sample_charm():
+def sample_charm() -> Generator[ops.CharmBase, None, None]:
     extra = str(Path(__file__).parent / 'sample_charm/src')
     sys.path.append(extra)
-    from charm import SampleCharm
+    from charm import SampleCharm  # type: ignore
 
     yield SampleCharm
     sys.path.remove(extra)
