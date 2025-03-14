@@ -32,15 +32,6 @@ from .vendor import otlp_json
 logger = logging.getLogger(__name__)
 
 
-# NOTE: OTEL SDK suppresses errors while exporting data
-# FIXME: redo this:
-# - [x] juju-log is not traced
-# - don't block juju-log here
-# - add recursion prevention into juju-log itself
-
-logger.addHandler(logging.StreamHandler())
-
-
 class BufferingSpanExporter(SpanExporter):
     """Buffers and sends out tracing data."""
 

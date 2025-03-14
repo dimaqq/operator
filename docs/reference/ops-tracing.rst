@@ -3,9 +3,10 @@
 `ops[tracing]`, telemetry
 =========================
 
-FIXME: write this up.
+.. automodule:: ops_tracing
 
-Open Telemetry resource attributes.
+Open Telemetry resource attributes
+----------------------------------
 
 - ``service.namespace`` the UUID of the Juju model.
 - ``service.namespace.name`` the name of the Juju model.
