@@ -3340,11 +3340,6 @@ class _ModelBackend:
         # the same content to juju.
         mgr = nullcontext() if args[0] == 'juju-log' else tracer.start_as_current_span(args[0])
         with mgr as span:
-            if span:
-                span.set_attribute('call', 'subprocess.run')
-                # Some hook tool command line arguments may include sensitive data
-                truncate = args[0] in ['action-set']
-                span.set_attribute('argv', [args[0], '...'] if truncate else args)
             kwargs = {
                 'stdout': subprocess.PIPE,
                 'stderr': subprocess.PIPE,
@@ -3359,6 +3354,11 @@ class _ModelBackend:
             args = (which_cmd,) + args[1:]
             if use_json:
                 args += ('--format=json',)
+            if span:
+                span.set_attribute('call', 'subprocess.run')
+                # Some hook tool command line arguments may include sensitive data
+                truncate = args[0] in ['action-set']
+                span.set_attribute('argv', [args[0], '...'] if truncate else args)
             # TODO(benhoyt): all the "type: ignore"s below kinda suck, but I've
             #                been fighting with Pyright for half an hour now...
             try:
