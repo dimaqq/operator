@@ -198,7 +198,7 @@ class Tracing(ops.Object):
                 return Config(None, None)
 
             if not url.startswith(('http://', 'https://')):
-                logging.warning(f"The {url=} must be an HTTP or an HTTPS URL")
+                logging.warning(f'The {url=} must be an HTTP or an HTTPS URL')
                 return Config(None, None)
 
             if url.startswith('http://'):
@@ -207,15 +207,16 @@ class Tracing(ops.Object):
             if not self._certificate_transfer:
                 return Config(url, self.ca_data)
 
-            ca_rel = self.model.get_relation(self.ca_relation_name) if self.ca_relation_name else None
+            ca_rel = (
+                self.model.get_relation(self.ca_relation_name) if self.ca_relation_name else None
+            )
             ca_rel_id = ca_rel.id if ca_rel else None
 
             if ca_rel and self._certificate_transfer.is_ready(ca_rel):
-                return Config(
-                    url, '\n'.join(sorted(self._certificate_transfer.get_all_certificates(ca_rel_id)))
-                )
+                ca_list = self._certificate_transfer.get_all_certificates(ca_rel_id)
+                return Config(url, '\n'.join(sorted(ca_list))) if ca_list else Config(None, None)
             else:
                 return Config(None, None)
         except (AmbiguousRelationUsageError, ProtocolNotRequestedError):
-            logging.exception("Error getting the tracing destination")
+            logging.exception('Error getting the tracing destination')
             return Config(None, None)
