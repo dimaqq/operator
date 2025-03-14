@@ -44,7 +44,6 @@ testing = [
     "ops-scenario>=7.0.5,<8",
 ]
 tracing = [
-    # FIXME pin exact version, like ops-scenario
     "ops-tracing",
 ]
 # Empty for now, because Harness is bundled with the base install, but allow
