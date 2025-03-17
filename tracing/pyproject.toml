@@ -115,3 +115,6 @@ ignore = [
     # type[xxx] require Python 3.9
     "UP006",
 ]
+
+[tool.pyright]
+exclude = [".tox", ".venv", "ops_tracing/vendor"]
