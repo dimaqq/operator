@@ -921,7 +921,7 @@ class Framework(Object):
                 # observer as "observed" increasing its data priority in the buffer.
                 # The logic could be different, for example, deferred events that are resolved
                 # during unobserved disptach could be interesting too. We keep it simple here.
-                tracing.mark_observed()
+                tracing._mark_observed()
             self._reemit(event_path)
 
     def reemit(self) -> None:

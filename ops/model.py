@@ -15,6 +15,8 @@
 """Representations of Juju's model, application, unit, and other entities."""
 
 import collections
+import contextlib
+import contextvars
 import dataclasses
 import datetime
 import enum
@@ -34,8 +36,6 @@ import typing
 import warnings
 import weakref
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
-from contextvars import ContextVar
 from pathlib import Path, PurePath
 from typing import (
     Any,
@@ -3329,9 +3329,9 @@ class _ModelBackend:
         self._is_leader: Optional[bool] = None
         self._leader_check_time = None
         self._hook_is_running = ''
-        self._is_recursive = ContextVar('_prevent_recursion', default=False)
+        self._is_recursive = contextvars.ContextVar('_prevent_recursion', default=False)
 
-    @contextmanager
+    @contextlib.contextmanager
     def prevent_recursion(self):
         token = self._is_recursive.set(True)
         try:
@@ -3373,7 +3373,7 @@ class _ModelBackend:
                 args += ('--format=json',)
             if span:
                 span.set_attribute('call', 'subprocess.run')
-                # Some hook tool command line arguments may include sensitive data
+                # Some hook tool command line arguments may include sensitive data.
                 truncate = args[0] in ['action-set']
                 span.set_attribute('argv', [args[0], '...'] if truncate else args)
             # TODO(benhoyt): all the "type: ignore"s below kinda suck, but I've

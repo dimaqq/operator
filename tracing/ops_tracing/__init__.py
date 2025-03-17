@@ -63,11 +63,11 @@ library imports this library and re-exports it as ``ops.tracing``.
 """
 
 from ._api import Tracing
-from ._backend import mark_observed, set_destination, setup
+from ._backend import _mark_observed, _setup, set_destination
 
 __all__ = [
     'Tracing',
-    'mark_observed',
+    '_mark_observed',
+    '_setup',
     'set_destination',
-    'setup',
 ]

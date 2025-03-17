@@ -212,11 +212,11 @@ class Buffer:
                         if collected_size > excess:
                             break
 
-                    collected_template = ",".join(["?"] * len(collected_ids))
+                    collected_template = ','.join(['?'] * len(collected_ids))
                     conn.execute(
                         f"""
                         DELETE FROM tracing
-                        WHERE id IN ({ collected_template })
+                        WHERE id IN ({collected_template})
                         """,  # noqa: S608
                         tuple(collected_ids),
                     )

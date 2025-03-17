@@ -109,7 +109,7 @@ class BufferingSpanExporter(SpanExporter):
             return
 
         if not config.url.startswith(('http://', 'https://')):
-            raise ValueError(f"{config.url=} must be an HTTP or HTTPS URL")
+            raise ValueError(f'{config.url=} must be an HTTP or HTTPS URL')
         context = self.ssl_context(config.ca) if config.url.startswith('https://') else None
 
         try:

@@ -24,6 +24,8 @@ import ops.testing
 import pytest
 from ops.jujucontext import _JujuContext
 
+from ops_tracing import _setup
+
 
 @pytest.fixture
 def http_relation():
@@ -76,7 +78,7 @@ def juju_context(tmp_path: pathlib.Path):
 
 @pytest.fixture
 def setup_tracing(juju_context: _JujuContext):
-    with ops.tracing.setup(juju_context, 'charm'):
+    with _setup(juju_context, 'charm'):
         yield
     # Note that OpenTelemetry disallows setting the tracer provider twice,
     # a warning is issued and new provider is ignored.

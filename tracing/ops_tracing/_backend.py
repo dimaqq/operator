@@ -51,7 +51,7 @@ class LogsToEvents(logging.Handler):
 
 
 @contextlib.contextmanager
-def setup(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
+def _setup(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
     """Control tracing lifespan of tracing.
 
     Args:
@@ -105,7 +105,7 @@ def set_destination(url: str | None, ca: str | None) -> None:
     _exporter.buffer.set_destination(config)
 
 
-def mark_observed() -> None:
+def _mark_observed() -> None:
     """Mark the tracing data collected in this dispatch as higher priority."""
     if not _exporter:
         return
