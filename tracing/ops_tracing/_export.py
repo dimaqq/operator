@@ -14,19 +14,19 @@
 from __future__ import annotations
 
 import logging
+import pathlib
 import ssl
 import threading
 import time
 import urllib.error
 import urllib.request
-from pathlib import Path
 from typing import Sequence
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
-from .buffer import Buffer
-from .const import EXPORT_TIMEOUT, SENDOUT_FACTOR
+from ._buffer import Buffer
+from ._const import EXPORT_TIMEOUT, SENDOUT_FACTOR
 from .vendor import otlp_json
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class BufferingSpanExporter(SpanExporter):
 
     cache: dict[str | None, ssl.SSLContext]
 
-    def __init__(self, buffer_path: Path | str):
+    def __init__(self, buffer_path: pathlib.Path | str):
         self.buffer = Buffer(buffer_path)
         self.lock = threading.Lock()
         self.cache = {}
@@ -71,7 +71,7 @@ class BufferingSpanExporter(SpanExporter):
 
             return SpanExportResult.SUCCESS
         except Exception:
-            logger.exception('Exporing tracing data')
+            logger.exception('Exporting tracing data')
             raise
 
     def ssl_context(self, ca: str | None) -> ssl.SSLContext:

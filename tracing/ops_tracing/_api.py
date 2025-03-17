@@ -20,7 +20,7 @@ from dataclasses import asdict
 
 import ops
 
-from .const import Config
+from ._const import Config
 from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer import (
     CertificateTransferRequires,
 )

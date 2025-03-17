@@ -16,13 +16,13 @@ from __future__ import annotations
 import contextlib
 import functools
 import logging
+import pathlib
 import sqlite3
-from pathlib import Path
 from typing import Callable
 
 from typing_extensions import ParamSpec, TypeVar
 
-from .const import Config
+from ._const import Config
 
 # Approximate safety limit for the database file size
 BUFFER_SIZE = 40 * 1024 * 1024
@@ -87,7 +87,7 @@ class Buffer:
     """Marks that data from this dispatch invocation has been marked observed."""
     stored: int | None = None
 
-    def __init__(self, path: Path | str):
+    def __init__(self, path: pathlib.Path | str):
         self.path = str(path)
         self.ids = set()
         self._set_db_schema()

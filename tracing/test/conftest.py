@@ -15,8 +15,8 @@
 from __future__ import annotations
 
 import json
+import pathlib
 import sys
-from pathlib import Path
 from typing import Generator
 
 import pytest
@@ -67,7 +67,7 @@ def ca_relation():
 
 
 @pytest.fixture
-def juju_context(tmp_path: Path):
+def juju_context(tmp_path: pathlib.Path):
     return _JujuContext.from_dict({
         'JUJU_VERSION': '3.6.0',
         'JUJU_UNIT_NAME': 'app/0',
@@ -76,24 +76,24 @@ def juju_context(tmp_path: Path):
 
 
 @pytest.fixture
-def setup_tracing(monkeypatch: pytest.MonkeyPatch, juju_context: _JujuContext):
+def setup_tracing(juju_context: _JujuContext):
     with ops.tracing.setup(juju_context, 'charm'):
         yield
-    # NOTE: # OpenTelemetry disallows setting the tracer provider twice,
+    # Note that OpenTelemetry disallows setting the tracer provider twice,
     # a warning is issued and new provider is ignored.
     # For example, we could reset the resource instead:
     # get_tracer_provider()._resource = resource
     #
-    # TODO: this would be the place to clean up
+    # This would be the place to clean up
     # - tracing db content doesn't matter as the db file is located in unique file per test
-    # - forcibly reset the opentelemetry global state
+    # - forcibly reset the OpenTelemetry global state
     #   - tracing provider span processor, as that holds the helper thread
     #   - the tracing provider, perhaps?
 
 
 @pytest.fixture
 def sample_charm() -> Generator[ops.CharmBase, None, None]:
-    extra = str(Path(__file__).parent / 'sample_charm/src')
+    extra = str(pathlib.Path(__file__).parent / 'sample_charm/src')
     sys.path.append(extra)
     from charm import SampleCharm  # type: ignore
 

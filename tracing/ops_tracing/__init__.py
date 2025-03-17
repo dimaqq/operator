@@ -62,8 +62,8 @@ When ``ops[tracing]`` has been added to your charm's dependencies, the Ops
 library imports this library and re-exports it as ``ops.tracing``.
 """
 
-from .api import Tracing
-from .backend import mark_observed, set_destination, setup
+from ._api import Tracing
+from ._backend import mark_observed, set_destination, setup
 
 __all__ = [
     'Tracing',

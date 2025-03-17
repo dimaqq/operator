@@ -25,8 +25,8 @@ from opentelemetry.trace import get_current_span, get_tracer_provider, set_trace
 if TYPE_CHECKING:
     from ops.jujucontext import _JujuContext
 
-from .const import BUFFER_FILE, Config
-from .export import BufferingSpanExporter
+from ._const import BUFFER_FILE, Config
+from ._export import BufferingSpanExporter
 
 _exporter: BufferingSpanExporter | None = None
 

@@ -17,7 +17,8 @@ from __future__ import annotations
 from typing import Type
 
 import pytest
-from ops_tracing.const import Config
+from ops_tracing import _backend
+from ops_tracing._const import Config
 
 import ops
 import ops.testing
@@ -38,8 +39,8 @@ def test_https_tracing_destination(
     state = ops.testing.State(relations={https_relation, ca_relation})
     ctx.run(ctx.on.relation_changed([https_relation, ca_relation][relation_to_poke]), state)
 
-    assert ops.tracing.backend._exporter
-    assert ops.tracing.backend._exporter.buffer.get_destination() == Config(
+    assert _backend._exporter
+    assert _backend._exporter.buffer.get_destination() == Config(
         'https://tls.example/v1/traces',
         'FIRST\nSECOND',
     )

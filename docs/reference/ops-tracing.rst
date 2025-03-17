@@ -1,7 +1,7 @@
 .. _ops_tracing:
 
-`ops[tracing]`, telemetry
-=========================
+`ops[tracing]`
+==============
 
 .. automodule:: ops_tracing
 
