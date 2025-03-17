@@ -183,12 +183,12 @@ class Buffer:
         self.ids.clear()
 
     @retry
-    def pump(self, record: tuple[bytes, str] | None = None) -> tuple[int, bytes, str] | None:
-        """Pump the buffer queue.
+    def pushpop(self, record: tuple[bytes, str] | None = None) -> tuple[int, bytes, str] | None:
+        """Push a message into the queue and return another.
 
-        Accepts an optional new data chunk.
-        Removes old, boring data if needed.
-        Returns the oldest important record.
+        Accepts an optional new data chunk (data, mime type).
+        Removes old, boring data if the queue would grow beyond the set limit.
+        Returns the oldest important record (id, data, mime type).
         """
         data, mime = record if record else (None, None)
         stored_size = 0 if data is None else (len(data) + 4095) // 4096 * 4096
