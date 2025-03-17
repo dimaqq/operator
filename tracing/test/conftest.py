@@ -19,10 +19,9 @@ import pathlib
 import sys
 from typing import Generator
 
-import pytest
-
 import ops
 import ops.testing
+import pytest
 from ops.jujucontext import _JujuContext
 
 

@@ -16,12 +16,12 @@ from __future__ import annotations
 
 from typing import Type
 
-import pytest
-from ops_tracing import _backend
-from ops_tracing._const import Config
-
 import ops
 import ops.testing
+import pytest
+
+from ops_tracing import _backend
+from ops_tracing._const import Config
 
 _pydantic = pytest.importorskip('pydantic')
 _export = pytest.importorskip('ops._tracing.export')

@@ -57,9 +57,9 @@ class BufferingSpanExporter(SpanExporter):
             # - 2s for live data
             deadline = time.monotonic() + 6
 
-            assert spans  # the BatchSpanProcessor won't call us if there's no data
+            assert spans  # noqa: S101  # the BatchSpanProcessor won't call us if there's no data
             rv = self.buffer.pushpop((otlp_json.encode_spans(spans), otlp_json.CONTENT_TYPE))
-            assert rv
+            assert rv  # noqa: S101  # we've just pushed something in
             self.do_export(*rv)
 
             for _ in range(SENDOUT_FACTOR - 1):
@@ -108,7 +108,8 @@ class BufferingSpanExporter(SpanExporter):
         if not config.url:
             return
 
-        assert config.url.startswith(('http://', 'https://'))
+        if not config.url.startswith(('http://', 'https://')):
+            raise ValueError(f"{config.url=} must be an HTTP or HTTPS URL")
         context = self.ssl_context(config.ca) if config.url.startswith('https://') else None
 
         try:

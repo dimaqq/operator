@@ -17,10 +17,9 @@ from __future__ import annotations
 from typing import Type
 from unittest.mock import Mock
 
-import pytest
-
 import ops
 import ops.testing
+import pytest
 
 _pydantic = pytest.importorskip('pydantic')
 

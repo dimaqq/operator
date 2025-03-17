@@ -52,7 +52,12 @@ class LogsToEvents(logging.Handler):
 
 @contextlib.contextmanager
 def setup(juju_context: _JujuContext, charm_class_name: str) -> Generator[None, None, None]:
-    """A context manager to control tracing lifespan."""
+    """Control tracing lifespan of tracing.
+
+    Args:
+        juju_context: the context for this dispatch, for annotation
+        charm_class_name: the name of the charm class, for annotation
+    """
     global _exporter
     app_name, unit_number = juju_context.unit_name.split('/', 1)
     # NOTE: Resource is immutable, and we want to start tracing early.
@@ -85,6 +90,7 @@ def set_destination(url: str | None, ca: str | None) -> None:
     Args:
         url: the URL of the telemetry service to send tracing data to
         ca: the CA list (PEM bundle, a multi-line string), only used for HTTPS URLs.
+
     """
     if url and not url.startswith(('http://', 'https://')):
         raise ValueError('Only HTTP and HTTPS tracing destinations are supported.')

@@ -26,13 +26,12 @@ from .vendor.charms.certificate_transfer_interface.v1.certificate_transfer impor
 )
 from .vendor.charms.tempo_coordinator_k8s.v0.tracing import (
     AmbiguousRelationUsageError,
+    ProtocolNotRequestedError,
     RelationInterfaceMismatchError,
     RelationNotFoundError,
     RelationRoleMismatchError,
-    ProtocolNotRequestedError,
     TracingEndpointRequirer,
 )
-
 
 # Databag operations can be trivially re-coded in pure Python:
 # - we'd get rid of pydantic dependency
@@ -120,6 +119,7 @@ class Tracing(ops.Object):
                         tracing_relation_name="charm-tracing",
                         ca_relation_name="send-ca-cert",
                     )
+
         """
         super().__init__(charm, f'{tracing_relation_name}+{ca_relation_name}')
         self.charm = charm
@@ -151,7 +151,7 @@ class Tracing(ops.Object):
             RelationRoleMismatchError,
             TypeError,
         ) as e:
-            raise ValueError(str(e))
+            raise ValueError(str(e)) from None
 
         for event in (
             self.charm.on.start,

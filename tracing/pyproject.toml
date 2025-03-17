@@ -1,9 +1,9 @@
 [project]
 name = "ops-tracing"
 version = "0.9.5"
-description = "The tracing facility for the Ops framework."
+description = "The tracing facility for the Ops library."
 requires-python = ">=3.8"
-readme = "readme.md"
+readme = "README.md"
 authors = [
     {name="The Charm Tech team at Canonical Ltd."},
 ]
@@ -64,7 +64,54 @@ target-version = "py38"
 quote-style = "single"
 exclude = ["ops_tracing/vendor/*"]
 
+[tool.ruff.lint]
+exclude = ["ops_tracing/vendor/*"]
+select = [
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+    # isort
+    "I001",
+    # pep8-naming
+    "N",
+    # flake8-builtins
+    "A",
+    # flake8-copyright
+    "CPY",
+    # pyupgrade
+    "UP",
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # Ruff specific
+    "RUF",
+    # Perflint
+    "PERF",
+    # pyflakes-docstrings
+    "D",
+]
+ignore = [
+    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible.
+    "D203",
+    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible.
+    "D213",
+    # we don't add a blank line after Args: in a function docstring
+    "D413",
+]
+
 [tool.ruff.lint.per-file-ignores]
 "test/*" = [
-    "D"
+    # no need for docstring
+    "D",
+    # asserts are OK in tests
+    "S101",
+    # type[xxx] require Python 3.9
+    "UP006",
 ]
