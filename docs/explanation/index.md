@@ -6,6 +6,7 @@
 
 charm-relation-interfaces
 testing
+tracing
 interface-tests
 holistic-vs-delta-charms
 how-and-when-to-defer-events
