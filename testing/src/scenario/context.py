@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
@@ -135,6 +134,10 @@ class Manager(Generic[CharmType]):
                 "Doing so implicitly upon exit...",
             )
             self.run()
+        assert (
+            self.ops
+        )  # guaranteed to be set: run was either called before, or right above
+        self.ops._destroy()
 
 
 def _copy_doc(original_func: Callable[..., Any]):
