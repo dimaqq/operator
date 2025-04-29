@@ -1,6 +1,7 @@
 name: ops Integration Tests
 
 on:
+  pull_request:  # remove before merge
   workflow_dispatch:
   schedule:
     - cron:  '42 7 25 * *'
@@ -18,6 +19,20 @@ jobs:
         test-group: [1, 2, 3, 4]
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v5
+      # Note that the test group count must match the groups, and there must be enough tests.
+      - run: |
+          echo "::group::Collected tests for test-group ${{ matrix.test-group }}"
+          uvx tox -e integration \
+            -- \
+            --collect-only -q \
+            --test-group-random-seed=0 \
+            --test-group-count=4 \
+            --test-group=${{ matrix.test-group }}
+          echo "::endgroup::"
       - run: |
            # Work around https://github.com/jnsgruk/concierge/issues/30
            sudo apt-get remove -y docker-ce docker-ce-cli containerd.io 
@@ -28,11 +43,6 @@ jobs:
           --juju-channel=3/stable
           --charmcraft-channel=3.x/stable
           -p "${{ matrix.preset }}"
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@v5
-      # Note that the test group count must match the groups, and there must be enough tests.
       - run: >
           uvx tox -e integration
           --
