@@ -24,13 +24,15 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v5
       - run: >
+          echo "## Selected tests" >> $GITHUB_STEP_SUMMARY &&
           echo "```" >> $GITHUB_STEP_SUMMARY &&
           uvx tox -e integration
           --
           --collect-only -q
           --test-group-random-seed=0
           --test-group-count=4
-          --test-group=${{ matrix.test-group }} >> $GITHUB_STEP_SUMMARY &&
+          --test-group=${{ matrix.test-group }} |
+          | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g' >> $GITHUB_STEP_SUMMARY &&
           echo "```" >> $GITHUB_STEP_SUMMARY
       - run: |
            # Work around https://github.com/jnsgruk/concierge/issues/30
