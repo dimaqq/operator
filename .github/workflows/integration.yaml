@@ -36,11 +36,11 @@ jobs:
           echo "::endgroup::"
 
       - run: >
-          uvx tox -e integration \
-          -- \
-          --collect-only -q \
-          --test-group-random-seed=0 \
-          --test-group-count=4 \
+          uvx tox -e integration
+          --
+          --collect-only -q
+          --test-group-random-seed=0
+          --test-group-count=4
           --test-group=${{ matrix.test-group }} >> $GITHUB_STEP_SUMMARY
 
       - run: |
