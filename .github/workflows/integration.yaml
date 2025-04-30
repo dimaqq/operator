@@ -24,6 +24,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v5
       # Note that the test group count must match the groups, and there must be enough tests.
+
       - run: |
           echo "::group::Collected tests for test-group ${{ matrix.test-group }}"
           uvx tox -e integration \
@@ -33,6 +34,15 @@ jobs:
             --test-group-count=4 \
             --test-group=${{ matrix.test-group }}
           echo "::endgroup::"
+
+      - run: >
+          uvx tox -e integration \
+          -- \
+          --collect-only -q \
+          --test-group-random-seed=0 \
+          --test-group-count=4 \
+          --test-group=${{ matrix.test-group }} >> $GITHUB_STEP_SUMMARY
+
       - run: |
            # Work around https://github.com/jnsgruk/concierge/issues/30
            sudo apt-get remove -y docker-ce docker-ce-cli containerd.io 
