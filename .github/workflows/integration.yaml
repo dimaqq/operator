@@ -24,16 +24,15 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v5
       - run: |
-        uvx tox -e integration -q \
-          -- \
-          --collect-only -q \
-          --test-group-random-seed=0 \
-          --test-group-count=4 \
-          --test-group=${{ matrix.test-group }} |
-        sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g' |
-        awk 'BEGIN { print "## Selected tests\n```" } { print } END { print "```" }' >> $GITHUB_STEP_SUMMARY
-
-
+          # Report selected tests
+          uvx tox -e integration -q \
+            -- \
+            --collect-only -q \
+            --test-group-random-seed=0 \
+            --test-group-count=4 \
+            --test-group=${{ matrix.test-group }} |
+          sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g' |
+          awk 'BEGIN { print "## Selected tests\n```" } { print } END { print "```" }' >> $GITHUB_STEP_SUMMARY
       - run: |
            # Work around https://github.com/jnsgruk/concierge/issues/30
            sudo apt-get remove -y docker-ce docker-ce-cli containerd.io 
