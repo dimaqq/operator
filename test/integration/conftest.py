@@ -178,6 +178,7 @@ def deploy_tempo(juju: jubilant.Juju):
         'tempo-coordinator-k8s',
         app='tempo',
         channel='edge',
+        revision=76,  # Snapshot at the time of writing these tests
         trust=True,
         resources={
             'nginx-image': 'ubuntu/nginx:1.24-24.04_beta',
@@ -191,6 +192,7 @@ def deploy_tempo_worker(juju: jubilant.Juju):
         'tempo-worker-k8s',
         app='tempo-worker',
         channel='edge',
+        revision=55,  # Snapshot at the time of writing these tests
         config={'role-all': True},
         trust=True,
         resources={'tempo-image': 'docker.io/ubuntu/tempo:2-22.04'},
