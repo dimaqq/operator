@@ -1,6 +1,7 @@
 name: ops Integration Tests
 
 on:
+  pull_request:  # don't merge this line
   workflow_dispatch:
   schedule:
     - cron:  '42 7 25 * *'
