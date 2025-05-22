@@ -115,7 +115,7 @@ class Tracing(ops.Object):
             )
 
         self._tracing = TracingEndpointRequirer(
-            self.framework,
+            self,
             tracing_relation_name,
             protocols=['otlp_http'],
         )

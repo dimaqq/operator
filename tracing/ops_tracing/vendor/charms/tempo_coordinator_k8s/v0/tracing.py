@@ -98,7 +98,7 @@ from ops.charm import (
     RelationEvent,
     RelationRole,
 )
-from ops.framework import EventSource, Object
+from ops.framework import EventSource, Framework, Object
 from ops.model import ModelError, Relation
 from pydantic import BaseModel, Field
 
@@ -486,7 +486,7 @@ class RelationRoleMismatchError(Exception):
 
 
 def _validate_relation_by_interface_and_direction(
-    parent: Object,
+    framework: Framework,
     relation_name: str,
     expected_relation_interface: str,
     expected_relation_role: RelationRole,
@@ -516,10 +516,10 @@ def _validate_relation_by_interface_and_direction(
             via `relation_name` argument does not have the same role as specified
             via the `expected_relation_role` argument.
     """
-    if relation_name not in parent.framework.meta.relations:
+    if relation_name not in framework.meta.relations:
         raise RelationNotFoundError(relation_name)
 
-    relation = parent.framework.meta.relations[relation_name]
+    relation = framework.meta.relations[relation_name]
 
     # fixme: why do we need to cast here?
     actual_relation_interface = cast(str, relation.interface_name)
@@ -530,12 +530,12 @@ def _validate_relation_by_interface_and_direction(
         )
 
     if expected_relation_role is RelationRole.provides:
-        if relation_name not in parent.framework.meta.provides:
+        if relation_name not in framework.meta.provides:
             raise RelationRoleMismatchError(
                 relation_name, RelationRole.provides, RelationRole.requires
             )
     elif expected_relation_role is RelationRole.requires:
-        if relation_name not in parent.framework.meta.requires:
+        if relation_name not in framework.meta.requires:
             raise RelationRoleMismatchError(
                 relation_name, RelationRole.requires, RelationRole.provides
             )
@@ -599,7 +599,7 @@ class TracingEndpointProvider(Object):
                 role.
         """
         _validate_relation_by_interface_and_direction(
-            charm, relation_name, RELATION_INTERFACE_NAME, RelationRole.provides
+            charm.framework, relation_name, RELATION_INTERFACE_NAME, RelationRole.provides
         )
 
         super().__init__(charm, relation_name + "tracing-provider")
@@ -766,7 +766,7 @@ class TracingEndpointRequirer(Object):
         """
         super().__init__(parent, f"internal: {relation_name}")
         _validate_relation_by_interface_and_direction(
-            parent, relation_name, RELATION_INTERFACE_NAME, RelationRole.requires
+            self.framework, relation_name, RELATION_INTERFACE_NAME, RelationRole.requires
         )
 
         self._is_single_endpoint = self.framework.meta.relations[relation_name].limit == 1
