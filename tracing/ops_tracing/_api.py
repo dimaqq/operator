@@ -67,7 +67,7 @@ class Tracing(ops.Object):
                 )
 
     Args:
-        charm: your charm instance
+        parent: your charm instance or charm lib Object
         tracing_relation_name: the name of the relation that provides the
             destination to send trace data to.
         ca_relation_name: the name of the relation that provides the CA
@@ -84,15 +84,14 @@ class Tracing(ops.Object):
 
     def __init__(
         self,
-        charm: ops.CharmBase,
+        parent: ops.Object,
         tracing_relation_name: str,
         *,
         ca_relation_name: str | None = None,
         ca_data: str | None = None,
     ):
         """Initialise the tracing service."""
-        super().__init__(charm, f'{tracing_relation_name}+{ca_relation_name}')
-        self.charm = charm
+        super().__init__(parent, f'{tracing_relation_name}+{ca_relation_name}')
         self.tracing_relation_name = tracing_relation_name
         self.ca_relation_name = ca_relation_name
         self.ca_data = ca_data
@@ -101,7 +100,7 @@ class Tracing(ops.Object):
             raise ValueError('At most one of ca_relation_name, ca_data is allowed')
 
         # Validate the arguments manually to raise exceptions with helpful messages.
-        relation = self.charm.meta.relations.get(tracing_relation_name)
+        relation = self.framework.meta.relations.get(tracing_relation_name)
         if not relation:
             raise ValueError(f'{tracing_relation_name=} is not declared in charm metadata')
 
@@ -116,21 +115,21 @@ class Tracing(ops.Object):
             )
 
         self._tracing = TracingEndpointRequirer(
-            self.charm,
+            self.framework,
             tracing_relation_name,
             protocols=['otlp_http'],
         )
 
         for event in (
-            self.charm.on.start,
-            self.charm.on.upgrade_charm,
+            self.framework.on.start,
+            self.framework.on.upgrade_charm,
             self._tracing.on.endpoint_changed,
             self._tracing.on.endpoint_removed,
         ):
             self.framework.observe(event, self._reconcile)
 
         if ca_relation_name:
-            relation = self.charm.meta.relations.get(ca_relation_name)
+            relation = self.framework.meta.relations.get(ca_relation_name)
             if not relation:
                 raise ValueError(f'{ca_relation_name=} is not declared in charm metadata')
 
@@ -144,7 +143,7 @@ class Tracing(ops.Object):
                     'is expected'
                 )
 
-            self._certificate_transfer = CertificateTransferRequires(charm, ca_relation_name)
+            self._certificate_transfer = CertificateTransferRequires(self, ca_relation_name)
 
             for event in (
                 self._certificate_transfer.on.certificate_set_updated,

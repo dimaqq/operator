@@ -486,7 +486,7 @@ class RelationRoleMismatchError(Exception):
 
 
 def _validate_relation_by_interface_and_direction(
-    charm: CharmBase,
+    parent: Object,
     relation_name: str,
     expected_relation_interface: str,
     expected_relation_role: RelationRole,
@@ -516,10 +516,10 @@ def _validate_relation_by_interface_and_direction(
             via `relation_name` argument does not have the same role as specified
             via the `expected_relation_role` argument.
     """
-    if relation_name not in charm.meta.relations:
+    if relation_name not in parent.framework.meta.relations:
         raise RelationNotFoundError(relation_name)
 
-    relation = charm.meta.relations[relation_name]
+    relation = parent.framework.meta.relations[relation_name]
 
     # fixme: why do we need to cast here?
     actual_relation_interface = cast(str, relation.interface_name)
@@ -530,12 +530,12 @@ def _validate_relation_by_interface_and_direction(
         )
 
     if expected_relation_role is RelationRole.provides:
-        if relation_name not in charm.meta.provides:
+        if relation_name not in parent.framework.meta.provides:
             raise RelationRoleMismatchError(
                 relation_name, RelationRole.provides, RelationRole.requires
             )
     elif expected_relation_role is RelationRole.requires:
-        if relation_name not in charm.meta.requires:
+        if relation_name not in parent.framework.meta.requires:
             raise RelationRoleMismatchError(
                 relation_name, RelationRole.requires, RelationRole.provides
             )
@@ -732,7 +732,7 @@ class TracingEndpointRequirer(Object):
 
     def __init__(
         self,
-        charm: CharmBase,
+        parent: Object,
         relation_name: str = DEFAULT_RELATION_NAME,
         protocols: Optional[List[ReceiverProtocol]] = None,
     ):
@@ -764,18 +764,16 @@ class TracingEndpointRequirer(Object):
                 via `relation_name` argument does not have the `RelationRole.provides`
                 role.
         """
+        super().__init__(parent, f"internal: {relation_name}")
         _validate_relation_by_interface_and_direction(
-            charm, relation_name, RELATION_INTERFACE_NAME, RelationRole.requires
+            parent, relation_name, RELATION_INTERFACE_NAME, RelationRole.requires
         )
 
-        super().__init__(charm, f"internal: {relation_name}")
+        self._is_single_endpoint = self.framework.meta.relations[relation_name].limit == 1
 
-        self._is_single_endpoint = charm.meta.relations[relation_name].limit == 1
-
-        self._charm = charm
         self._relation_name = relation_name
 
-        events = self._charm.on[self._relation_name]
+        events = self.framework.on[self._relation_name]
         self.framework.observe(events.relation_changed, self._on_tracing_relation_changed)
         self.framework.observe(events.relation_broken, self._on_tracing_relation_broken)
 
@@ -796,11 +794,11 @@ class TracingEndpointRequirer(Object):
             )
 
         try:
-            if self._charm.unit.is_leader():
+            if self.framework.model.unit.is_leader():
                 for relation in relations:
                     TracingRequirerAppData(
                         receivers=list(protocols),
-                    ).dump(relation.data[self._charm.app])
+                    ).dump(relation.data[self.framework.model.app])
 
         except ModelError as e:
             # args are bytes
@@ -819,7 +817,7 @@ class TracingEndpointRequirer(Object):
     @property
     def relations(self) -> List[Relation]:
         """The tracing relations associated with this endpoint."""
-        return self._charm.model.relations[self._relation_name]
+        return self.framework.model.relations[self._relation_name]
 
     @property
     def _relation(self) -> Optional[Relation]:
@@ -922,7 +920,7 @@ class TracingEndpointRequirer(Object):
             relations = [relation] if relation else self.relations
             for relation in relations:
                 try:
-                    databag = TracingRequirerAppData.load(relation.data[self._charm.app])
+                    databag = TracingRequirerAppData.load(relation.data[self.framework.model.app])
                 except DataValidationError:
                     continue
 

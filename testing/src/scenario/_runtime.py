@@ -339,10 +339,11 @@ class Runtime:
 
             except (NoObserverError, ActionFailed):
                 raise  # propagate along
-            except Exception as e:
-                raise UncaughtCharmError(
-                    f'Uncaught exception ({type(e)}) in operator/charm code: {e!r}',
-                ) from e
+            # FIXME uncommment back; used for debug
+            # except Exception as e:
+                # raise UncaughtCharmError(
+                    # f'Uncaught exception ({type(e)}) in operator/charm code: {e!r}',
+                # ) from e
 
             finally:
                 for key in tuple(os.environ):
