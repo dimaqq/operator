@@ -92,7 +92,7 @@ juju integrate <certificate_transfer provider charm> <certificate_transfer requi
 
 import json
 import logging
-from typing import List, MutableMapping, Optional, Set
+from typing import List, MutableMapping, Optional, Set, Union
 
 from ops import (
     CharmEvents,
@@ -367,7 +367,7 @@ class CertificateTransferRequires(Object):
 
     def __init__(
         self,
-        charm: CharmBase,
+        parent: Union[CharmBase, Object],
         relationship_name: str,
     ):
         """Observe events related to the relation.
@@ -376,14 +376,13 @@ class CertificateTransferRequires(Object):
             charm: Charm object
             relationship_name: Juju relation name
         """
-        super().__init__(charm, f"internal: {relationship_name}_v1")
+        super().__init__(parent, f"{relationship_name}_v1")
         self.relationship_name = relationship_name
-        self.charm = charm
         self.framework.observe(
-            charm.on[relationship_name].relation_changed, self._on_relation_changed
+            self.framework.on[relationship_name].relation_changed, self._on_relation_changed
         )
         self.framework.observe(
-            charm.on[relationship_name].relation_broken, self._on_relation_broken
+            self.framework.on[relationship_name].relation_broken, self._on_relation_broken
         )
 
     def _on_relation_changed(self, event: RelationChangedEvent) -> None:
