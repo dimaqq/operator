@@ -24,6 +24,9 @@ import pathlib
 import subprocess
 
 import pytest
+
+pytest_operator = pytest.importorskip("pytest_operator")
+
 from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)

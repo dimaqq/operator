@@ -25,6 +25,8 @@ import pytest
 import ops
 from ops import testing
 
+pytestmark = pytest.mark.benchmark
+
 
 @pytest.fixture
 def benchmark_charm():

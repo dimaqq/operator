@@ -282,6 +282,9 @@ reportUnnecessaryTypeIgnoreComment = "error"
 disableBytesTypePromotions = false
 stubPath = ""
 
+[tool.pytest.ini_options]
+addopts = "--ignore=examples"
+
 [tool.codespell]
 skip = './docs/_build,.venv,venv,build'
 quiet-level = 3

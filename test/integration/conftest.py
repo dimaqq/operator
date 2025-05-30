@@ -23,8 +23,9 @@ import subprocess
 from typing import Callable, Generator
 
 import jubilant
-import minio
 import pytest
+
+minio = pytest.importorskip("minio")
 
 
 @pytest.fixture
