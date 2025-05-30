@@ -22,12 +22,15 @@ import logging
 import os
 import pathlib
 import subprocess
+from typing import TYPE_CHECKING
 
 import pytest
 
-pytest_operator = pytest.importorskip("pytest_operator")
-
-from pytest_operator.plugin import OpsTest
+if TYPE_CHECKING:
+    from pytest_operator.plugin import OpsTest
+else:
+    pytest_operator = pytest.importorskip("pytest_operator")
+    from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
 

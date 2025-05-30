@@ -93,6 +93,7 @@ extend-exclude = ["docs/conf.py", "docs/.sphinx/"]
 # Ruff formatter configuration
 [tool.ruff.format]
 quote-style = "single"
+exclude = ["tracing/ops_tracing/vendor/*"]
 
 [tool.ruff.lint]
 select = [
@@ -178,7 +179,7 @@ ignore = [
 exclude = ["tracing/ops_tracing/vendor/*"]
 
 [tool.ruff.lint.per-file-ignores]
-"test/*" = [
+"test_*/*" = [
     # All documentation linting.
     "D",
 
@@ -216,7 +217,7 @@ exclude = ["tracing/ops_tracing/vendor/*"]
     "PERF203",  # try-except in loop body
     "PERF401",  # Use list.extend
 ]
-"testing/tests/*" = [
+"test_testing/*" = [
     # All documentation linting.
     "D",
     # TODO: the below ignores should be fixed
@@ -239,7 +240,7 @@ exclude = ["tracing/ops_tracing/vendor/*"]
     "RUF001",  # String contains ambiguous `µ` (MICRO SIGN). Did you mean `μ` (GREEK SMALL LETTER MU)?
     "RUF002",  # Docstring contains ambiguous `µ` (MICRO SIGN). Did you mean `μ` (GREEK SMALL LETTER MU)?
 ]
-"test/test_helpers.py" = [
+"test_*/test_helpers.py" = [
     "S605",  # Starting a process with a shell: seems safe, but may be changed in the future; consider rewriting without `shell`
     "S607",  # Starting a process with a partial executable path
 ]
@@ -266,8 +267,8 @@ convention = "google"
 builtins-ignorelist = ["id", "min", "map", "range", "type", "TimeoutError", "ConnectionError", "Warning", "input", "format"]
 
 [tool.pyright]
-include = ["ops/*.py", "ops/_private/*.py", "test/*.py", "test/charms/*/src/*.py", "testing/src/*.py"]
-exclude = ["tracing/*"]
+include = ["ops/*.py", "ops/_private/*.py", "test*/*.py", "test_*/charms/*/src/*.py", "testing/src/*.py"]
+exclude = ["tracing/ops_tracing/vendor"]
 extraPaths = ["testing", "tracing"]
 pythonVersion = "3.8" # check no python > 3.8 features are used
 pythonPlatform = "All"

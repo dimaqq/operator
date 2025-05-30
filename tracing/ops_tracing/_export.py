@@ -79,9 +79,9 @@ class BufferingSpanExporter(SpanExporter):
             # We'll limit the running time of each export to (10 - 4) seconds.
             deadline = time.monotonic() + 6
 
-            assert spans  # noqa: S101  # The BatchSpanProcessor won't call us if there's no data.
+            assert spans
             rv = self.buffer.pushpop((otlp_json.encode_spans(spans), otlp_json.CONTENT_TYPE))
-            assert rv  # noqa: S101  # We've just pushed something in.
+            assert rv
             self.do_export(*rv)
 
             for _ in range(SENDOUT_FACTOR - 1):
