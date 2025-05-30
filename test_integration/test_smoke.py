@@ -29,7 +29,7 @@ import pytest
 if TYPE_CHECKING:
     from pytest_operator.plugin import OpsTest
 else:
-    pytest_operator = pytest.importorskip("pytest_operator")
+    pytest_operator = pytest.importorskip('pytest_operator')
     from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)

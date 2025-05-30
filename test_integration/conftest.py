@@ -28,8 +28,8 @@ if TYPE_CHECKING:
     import jubilant
     import minio
 else:
-    jubilant = pytest.importorskip("jubilant")
-    minio = pytest.importorskip("minio")
+    jubilant = pytest.importorskip('jubilant')
+    minio = pytest.importorskip('minio')
 
 
 @pytest.fixture
