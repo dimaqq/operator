@@ -29,13 +29,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from test.test_helpers import FakeScript
 
 import ops
 from ops.framework import _BREAKPOINT_WELCOME_MESSAGE, _event_regex
 from ops.jujucontext import _JujuContext
 from ops.model import _ModelBackend
 from ops.storage import JujuStorage, NoSnapshotError, SQLiteStorage
-from test.test_helpers import FakeScript
 
 
 def create_model():

@@ -20,10 +20,15 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import httpx
-import jubilant
+import pytest
+
+if TYPE_CHECKING:
+    import jubilant
+else:
+    jubilant = pytest.importorskip('jubilant')
 
 
 def test_direct_connection(build_charm: Callable[[], str], juju: jubilant.Juju):

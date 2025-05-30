@@ -14,14 +14,12 @@
 
 from __future__ import annotations
 
-from typing import Type
+import pytest
+from ops_tracing import _backend
+from ops_tracing._buffer import Destination
 
 import ops
 import ops.testing
-import pytest
-
-from ops_tracing import _backend
-from ops_tracing._buffer import Destination
 
 _pydantic = pytest.importorskip('pydantic')
 _export = pytest.importorskip('ops._tracing.export')
@@ -29,7 +27,7 @@ _export = pytest.importorskip('ops._tracing.export')
 
 @pytest.mark.parametrize('relation_to_poke', [0, 1])
 def test_https_tracing_destination(
-    sample_charm: Type[ops.CharmBase],
+    sample_charm: type[ops.CharmBase],
     setup_tracing: None,
     https_relation: ops.testing.Relation,
     ca_relation: ops.testing.Relation,
