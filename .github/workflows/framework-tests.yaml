@@ -16,11 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-        exclude:
-          - {python-version: "3.8", os: "macos-latest"}  # because arm
-          - {python-version: "3.9", os: "macos-latest"}  # because arm
+        os: [ubuntu-latest]
+        python-version: ["3.8", "3.9", "3.10"]
+        dummy: [1,2,3,4,5,6,7,8,9,0]
 
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +28,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Enable core dumps
+        run: |
+          # unlimited core size
+          ulimit -c unlimited
+          # send cores to /tmp with a predictable name
+          echo '/tmp/core-%e-%p-%t' | sudo tee /proc/sys/kernel/core_pattern
 
       - name: Install tox
         run: pip install tox~=4.2
@@ -66,3 +71,10 @@ jobs:
 
       - name: Run tracing unit tests
         run: cd tracing && tox -e unit
+
+      - name: Upload core dumps
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: core-dumps
+          path: /tmp/core-*
