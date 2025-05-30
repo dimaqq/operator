@@ -19,12 +19,12 @@ import pathlib
 import sys
 from typing import Generator
 
+import ops_tracing
+import pytest
+
 import ops
 import ops.testing
-import pytest
 from ops.jujucontext import _JujuContext
-
-import ops_tracing
 
 
 @pytest.fixture

@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 import pathlib
 import subprocess
-from typing import Callable, Generator, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Generator
 
 import pytest
 

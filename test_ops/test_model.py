@@ -30,6 +30,7 @@ from typing import Mapping
 from unittest import mock
 
 import pytest
+from test.test_helpers import FakeScript
 
 import ops
 import ops.testing
@@ -38,7 +39,6 @@ from ops._private import yaml
 from ops.jujucontext import _JujuContext
 from ops.jujuversion import JujuVersion
 from ops.model import _ModelBackend
-from test.test_helpers import FakeScript
 
 
 @pytest.fixture

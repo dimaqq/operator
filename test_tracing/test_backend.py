@@ -16,10 +16,9 @@ from __future__ import annotations
 
 from unittest.mock import ANY, patch
 
+import ops_tracing
 import pytest
 from opentelemetry.trace import get_tracer_provider
-
-import ops_tracing
 from ops_tracing import _backend
 from ops_tracing._buffer import Destination
 
