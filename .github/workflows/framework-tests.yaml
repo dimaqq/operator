@@ -77,9 +77,6 @@ jobs:
       - name: Run unit tests
         run: tox -e unit
 
-      - name: Run tracing unit tests
-        run: cd tracing && tox -e unit
-
   test-real-pebble:
     runs-on: ${{ matrix.os }}
 
@@ -119,7 +116,7 @@ jobs:
           PEBBLE: /tmp/pebble
 
       - name: Run Real pebble tests
-        run: tox -e unit -- test/test_real_pebble.py
+        run: tox -e unit -- test_ops/test_real_pebble.py
         env:
           RUN_REAL_PEBBLE_TESTS: 1
           PEBBLE: /tmp/pebble
