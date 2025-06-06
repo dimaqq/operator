@@ -28,9 +28,9 @@ import unittest
 import unittest.util
 
 import pytest
+import test.fake_pebble as fake_pebble
 import websocket
 
-import test.fake_pebble as fake_pebble
 from ops import pebble
 from ops._private import yaml
 

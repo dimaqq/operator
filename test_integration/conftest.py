@@ -20,11 +20,16 @@ from __future__ import annotations
 import logging
 import pathlib
 import subprocess
-from typing import Callable, Generator
+from typing import TYPE_CHECKING, Callable, Generator
 
-import jubilant
-import minio
 import pytest
+
+if TYPE_CHECKING:
+    import jubilant
+    import minio
+else:
+    jubilant = pytest.importorskip('jubilant')
+    minio = pytest.importorskip('minio')
 
 
 @pytest.fixture

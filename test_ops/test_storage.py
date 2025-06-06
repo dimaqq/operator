@@ -29,10 +29,10 @@ from textwrap import dedent
 
 import pytest
 import yaml
+from test.test_helpers import FakeScript
 
 import ops
 import ops.storage
-from test.test_helpers import FakeScript
 
 
 @pytest.fixture

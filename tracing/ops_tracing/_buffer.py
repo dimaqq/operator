@@ -77,7 +77,7 @@ def retry(f: Callable[P, R]) -> Callable[P, R]:
             except sqlite3.Error as e:  # noqa: PERF203
                 exc = e
 
-        assert exc  # noqa: S101  # we'd have returned otherwise
+        assert exc
         raise exc
 
     return wrapper
@@ -241,7 +241,7 @@ class Buffer:
                     (priority, data, mime),
                 )
 
-                assert cursor.lastrowid is not None  # noqa: S101  # Just inserted.
+                assert cursor.lastrowid is not None
                 if not self.observed:
                     self.ids.add(cursor.lastrowid)
 
