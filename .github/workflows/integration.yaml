@@ -16,6 +16,7 @@ jobs:
       matrix:
         preset: ['k8s', 'microk8s']
         test: ['test_direct_connection', 'test_with_tls']
+        juju: ['3/stable', '4.0/beta', '4.0/edge']
 
     steps:
       - run: |
@@ -25,7 +26,7 @@ jobs:
       - run: sudo snap install --classic concierge
       - run: >
           sudo concierge prepare
-          --juju-channel=3/stable
+          --juju-channel=${{ matrix.juju }}
           --charmcraft-channel=3.x/stable
           -p "${{ matrix.preset }}"
       - uses: actions/checkout@v4
