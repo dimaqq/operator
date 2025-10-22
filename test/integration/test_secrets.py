@@ -155,11 +155,15 @@ def test_set_secret(
 @pytest.fixture
 def cleanup(juju: jubilant.Juju, leader: str) -> None:
     """Remove all secrets from the test app."""
+    __import__('time').sleep(5)  # FIXME
     secrets = juju.secrets()
+    __import__('logging').warning('what I see %s', secrets)
     for secret in secrets:
         if secret.owner == 'test-secrets':
+            __import__('time').sleep(5)  # FIXME
             juju.exec(f'secret-remove {secret.uri}', unit=leader)
         else:
+            __import__('time').sleep(5)  # FIXME
             # Later, there could be user secrets too.
             juju.remove_secret(secret.uri)
 
@@ -167,8 +171,13 @@ def cleanup(juju: jubilant.Juju, leader: str) -> None:
 @pytest.fixture
 def good_secret(juju: jubilant.Juju, leader: str, cleanup: None) -> str:
     """Remove all old secrets and add a new secret owned by the test app."""
+    # Juju 3.2 attempted hack
+    # perhaps Juju controller needs time to settle after a secret is removed
+    # (e.g. finish running "remove secret" event in all units)
+    __import__('time').sleep(5)  # FIXME
     juju.exec('secret-add --label thelabel some=content', unit=leader)
     secrets = juju.secrets()
+    __import__('logging').warning('what I see after %s', secrets)
     assert secrets
     assert secrets[0].owner == 'test-secrets'
     # https://github.com/canonical/jubilant/issues/211
