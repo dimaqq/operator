@@ -126,6 +126,12 @@ def test_peer_changed():
 
 If you wish to use the framework to test an existing charm type, you will probably need to mock out certain calls that are not covered by the `State` data structure. In that case, you will have to manually mock, patch or otherwise simulate those calls.
 
+If your test needs realistic relation inputs from a deployed model, you can use
+`jhack scenario snapshot` to capture state, then adapt the generated data to
+`ops.testing.State` and `ops.testing.Context`.
+
+> See more: [](/howto/manage-relations)
+
 For example, suppose that the charm we're testing uses the [lightkube client](https://github.com/gtsystem/lightkube) to talk to Kubernetes. To mock that object, modify the test file to contain:
 
 ```python

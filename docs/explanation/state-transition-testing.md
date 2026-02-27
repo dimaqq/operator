@@ -13,6 +13,10 @@ namespace, rather than `scenario`. "from ops import testing ... ctx =
 testing.Context" rather than "import scenario ... ctx = scenario.Context".
 ```
 
+If you are migrating an existing charm and need realistic starting data, you
+can capture a live model snapshot and convert it into a state-transition test.
+For a workflow focused on relation debugging, see [](/howto/manage-relations).
+
 Where the deprecated Harness framework enables you to procedurally mock pieces of the state the
 charm needs to function, state-transition tests allow you to declaratively
 define the state all at once, and use it as a sort of context against which you
