@@ -18,14 +18,8 @@ uv tool install tox --with tox-uv
 uv tool update-shell
 ```
 
-To run checks automatically before each commit, install pre-commit and the lint
-tooling:
-
-```sh
-uv tool install pre-commit
-uv sync --group lint
-pre-commit install
-```
+Optionally, to run checks automatically before each commit, install
+[pre-commit](https://pre-commit.com/#install) and run `pre-commit install`.
 
 You can validate that you have a working installation by running:
 
